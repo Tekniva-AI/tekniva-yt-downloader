@@ -1,0 +1,73 @@
+name: Build Windows release
+on:
+  push:
+    tags: ['v*-beta']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify tag matches the source version
+        shell: python
+        run: |
+          import os, sys
+          sys.path.insert(0, 'program')
+          from translations import VERSION
+          assert os.environ['GITHUB_REF_NAME'] == 'v' + VERSION.removeprefix('beta ') + '-beta'
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python program/bootstrap_tools.py
+      - run: python program/test_program.py
+      - run: python program/collect_licenses.py
+      - run: python program/build_release.py --rebuild
+      - run: python program/package_release.py
+      - name: Smoke test packaged application
+        shell: pwsh
+        run: |
+          $result = Join-Path $env:RUNNER_TEMP 'dependencies.json'
+          $app = Start-Process -FilePath '.\program\Tekniva YT Downloader.exe' -ArgumentList '--check', $result -WindowStyle Hidden -Wait -PassThru
+          if ($app.ExitCode -ne 0) { throw 'Packaged dependency check failed' }
+          $deps = Get-Content -LiteralPath $result | ConvertFrom-Json
+          if (-not ($deps.ffmpeg -and $deps.aria2 -and $deps.node)) { throw 'Missing packaged dependency' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: release/**
+          if-no-files-found: error
+  draft:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-release
+          path: assets
+      - uses: actions/checkout@v4
+      - name: Create a reviewable draft prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            if [ -f "docs/releases/$TAG.md" ]; then
+              gh release create "$TAG" --draft --prerelease --title "Tekniva YT Downloader $TAG" --notes-file "docs/releases/$TAG.md"
+            else
+              gh release create "$TAG" --draft --prerelease --title "Tekniva YT Downloader $TAG" --generate-notes
+            fi
+          fi
+          if [ "$(gh release view "$TAG" --json isDraft --jq .isDraft)" = true ]; then
+            find assets -type f -print0 | xargs -0 gh release upload "$TAG" --clobber
+          fi

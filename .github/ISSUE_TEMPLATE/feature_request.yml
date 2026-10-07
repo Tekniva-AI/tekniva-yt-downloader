@@ -1,0 +1,17 @@
+name: Özellik önerisi / Feature request
+description: Bir iyileştirme önerin / Suggest an improvement
+title: "[Feature] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: İhtiyaç / Need
+      description: Hangi kullanımda ne eksik? / What is missing in your workflow?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Öneri ve alternatifler / Proposal and alternatives
+    validations:
+      required: true

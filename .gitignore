@@ -1,0 +1,34 @@
+# Personal media, preferences and download history never belong in Git.
+/Indirmeler/
+/UHFklip/
+/release/
+/program/tools/
+/program/veri/
+/program/islem-kayitlari/
+/program/kapak-test/
+/program/ayarlar.json
+/program/kuyruk.json
+/program/*.json
+/program/*.png
+/program/*.txt
+!/program/KULLANIM.txt
+!/program/version_info.txt
+/program/ui_layout.txt
+# Historical local verification scripts; the maintained suite is published.
+/program/verify_*.py
+!/program/verify_theme.py
+*.exe
+*.zip
+*.7z
+*.lnk
+*.spec
+*.log
+__pycache__/
+*.py[cod]
+build/
+dist/
+.venv/
+.env
+.env.*
+.DS_Store
+Thumbs.db

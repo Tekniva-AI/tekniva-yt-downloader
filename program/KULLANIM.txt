@@ -1,0 +1,143 @@
+TEKNIVA YT DOWNLOADER — beta 0.1.4
+
+YENİ ÖZELLİKLER — beta 0.1.4
+Alt çubukta Instagram simgesine tıklayarak Tekniva hesabını açabilirsiniz.
+Açık kaynak, ekran görüntüleri, katkı rehberi ve yeni sürümler:
+https://github.com/Tekniva-AI/tekniva-yt-downloader
+İndirme paketleri ve değişiklik geçmişi Releases bölümündedir.
+
+YENİ ÖZELLİKLER — beta 0.1.3
+Arşivde kayıtlı video/şarkının dosyası silinmiş veya boşsa yeniden indirilir.
+Dosya mevcutsa atlanır; diğer videoların arşiv kayıtları korunur.
+Ayarlar menüsüne Sanatçı adına göre alt klasör oluştur ve Oynatma listesi
+adına göre alt klasör oluştur seçenekleri eklendi. Varsayılanları kapalıdır.
+Birden fazla seçenek açıkken sıra Kanal / Sanatçı / Oynatma listesi olur.
+Kaynakta sanatçı bilgisi yoksa kanal adı kullanılır. Bir oynatma listesi
+bağlantısından eklenen öğeler kendi liste adını kuyrukta da korur.
+Tek video veya kanal bağlantısında liste adı yoksa liste klasörü açılmaz.
+
+YENİ ÖZELLİKLER — beta 0.1.2
+Yeni MP3 indirmelerine video veya şarkının kapak görseli otomatik eklenir.
+Görsel MP3 dosyasının içine gömülür; indirme klasöründe ayrı kapak dosyası
+bırakılmaz. JPEG ön kapak ve ID3v2.3 etiketleri kullanılır. Başlık ve
+kaynakta mevcut sanatçı bilgileri de dosyaya eklenir.
+Kapak görseli, bunu destekleyen araç sistemleri ve müzik oynatıcılarda görünür.
+Ses dönüştürüldükten sonra kapak eklerken ses yeniden sıkıştırılmaz.
+
+YENİ ÖZELLİKLER — beta 0.1.1
+Koyu modda seçim kutuları, açılır listeler, fareyle üzerine gelinen
+kontroller ve devre dışı düğmelerin renkleri düzeltildi.
+Ayarlar, Dil ve görünüm / Dosyaların kaydedileceği yer olarak düzenlendi.
+Açık / Koyu düğmeleri temayı anında önizler. Kaydet tercihi saklar;
+Vazgeç, Escape veya pencereyi kapatmak önceki temayı geri getirir.
+Desteklenen Windows sürümlerinde başlık çubuğu da temaya uyum sağlar.
+Her yeni güncellemede sürüm numarası artırılır.
+
+YENİ ÖZELLİKLER — beta 0.1.0
+Ayarlar menüsünden Türkçe, İngilizce, Almanca, Fransızca, İspanyolca,
+Arapça veya Hintçe seçilebilir. Açık ve koyu tema desteklenir.
+Dil ve tema tercihi kaydedilir. Daha küçük pencere yeniden boyutlandırılabilir.
+Başlık, Süre, Durum ve Seç sütunlarına tıklayarak sıralama yapın.
+Aynı sütuna tekrar tıklamak sıralama yönünü tersine çevirir.
+Süre sayısal olarak sıralanır; arama ve sıralama seçiminizi korur.
+Durum sütunu bağlantı hazırlama, parça indirme yüzdesi, dosya hazırlama,
+tamamlanma, hata ve durdurulma aşamalarını gösterir. MP4 indirmelerinde
+video ve ses ayrı akışlar olduğu için parça yüzdesi ikinci akışta yeniden
+başlayabilir. Alttaki ikinci çubuk tüm kuyruğun ilerlemesini gösterir.
+Listeyi getir / Sıraya ekle işlemleri önceki aramayı temizler.
+Sıraya ekle ile farklı video ve şarkı bağlantılarını biriktirebilirsiniz.
+Eklenenler seçili görünür; istemediklerinizi kutudan kaldırabilirsiniz.
+Seçilenleri kaldır onları listeden çıkarır, indirilmiş dosyaları silmez.
+Kuyruk program yeniden açıldığında geri gelir. Sonra Seçilenleri indir
+ile indirmeyi başlatın. İndirme otomatik başlamaz.
+Tek bağlantı, kanal, albüm ve çalma listeleri eklenebilir.
+Varsayılan olarak tüm indirmeler seçilen kayıt klasörüne doğrudan kaydedilir.
+Ayarlar menüsündeki Kanal adına göre alt klasör oluştur seçeneği açılırsa
+her kanal için tek bir alt klasör açılır. Biçim/kalite alt klasörleri açılmaz.
+Kayıt klasörü ve alt klasör tercihi Ayarlar menüsünden değiştirilir.
+Yardımcı JSON/TXT kayıtları program\veri\indirmeler içinde tutulur.
+Şimdilik uygulamaya reklam eklenmemiştir.
+
+
+1. Tekniva YT Downloader.exe dosyasını çift tıklayarak açın.
+2. YouTube / YouTube Music kanal, video, şarkı, albüm veya çalma listesi
+   linkini yapıştırın. @kanal adı da desteklenir.
+3. MP4 (video) veya MP3 (ses) seçin.
+4. Çözünürlük / ses kalitesi ve kapsamı seçin.
+5. Listeyi getir düğmesine basın.
+6. Seç sütunundaki kutuları tıklayarak istediğiniz videoları işaretleyin.
+   Tümünü seç ve Seçimi temizle düğmeleri toplu seçim yapar.
+7. Ayarlar menüsünde kayıt klasörünü seçip Seçilenleri indir düğmesine basın.
+
+ARAMA VE SEÇİM
+Ara alanı listedeki başlıkları anında filtreler. Türkçe karakterler
+yakın yazımla da aranabilir: baris, Barış başlığını bulur.
+Sonuçları seç sadece filtrede görünenleri mevcut seçime ekler.
+Tümünü seç filtre dışında kalanlar dahil bütün listeyi seçer.
+Arama, önceden seçilmiş videoların seçimini kaldırmaz. Toplam seçili
+sayısı üstte görünür. Hatalıları seç sadece başarısızları seçer.
+
+HIZ VE GEÇİCİ HATALAR
+Hızlı: uygun doğrudan dosyalarda 8 bağlantıyla aria2 aktarımı;
+parçalı yayınlarda aynı anda en fazla 8 parça. Dengeli: 4 bağlantı.
+Uyumlu: 1 bağlantı. Uygulama dosya aktarımına hız sınırı koymaz.
+Gerçek hız internet bağlantısına, diske ve YouTube sunucusuna bağlıdır.
+Hızlı aktarım her zaman daha hızlı sonuç vermez.
+Videolar arasında 5-10 saniyelik kısa bekleme ve istekler arasında
+kısa aralık, YouTube'un geçici istek kısıtlarını azaltmak için uygulanır.
+403, bağlantı kopması ve zaman aşımında bağlantı bilgisi yenilenir;
+en fazla 3 girişim yapılır. 429 gibi istek sınırında daha uzun beklenir.
+Son girişimde uygun parçalı yayın kullanılır. Daha düşük çözünürlük
+veya kare hızı seçilmez; uygun kalite erişilemiyorsa hata raporlanır.
+Eksik yayın parçaları sessizce atlanmaz.
+YouTube'un istek, oturum ve erişim kısıtlarını kaldırmak veya kesintisiz
+indirme/hız garantisi vermek mümkün değildir. Özel/üyelik içerikleri
+hesap erişimi olmadan indirilemez. Hata kayıtları saklanır.
+Güncel teknik kaynak: https://github.com/yt-dlp/yt-dlp/wiki/Extractors
+
+Listeyi getir düğmesi yalnızca video listesini getirir; dosya indirmez.
+Kanal listesinde başlangıçta hiçbir video seçili değildir.
+Tek video linkinde o video otomatik seçilir. watch, youtu.be, Shorts,
+live ve embed video linkleri desteklenir. Video linkindeki oynatma
+listesi parametresi dikkate alınmaz; sadece o video listeye gelir.
+YouTube Music şarkısı için music.youtube.com/watch, albüm için
+music.youtube.com/browse/MPRE..., çalma listesi için
+music.youtube.com/playlist?list=... bağlantısını kullanın.
+Albüm ve çalma listelerinde parçalar seçilerek indirilebilir.
+MP3 için Biçim menüsünden MP3'ü seçin.
+Video başlığına çift tıklamak da seçimi değiştirir. Ctrl/Shift ile
+satırları vurgulayıp boşluk tuşuyla birlikte işaretleyebilirsiniz.
+Bağlantıyı değiştirmek mevcut kuyruğu silmez. Listeyi getir yeni listeyi açar;
+Sıraya ekle mevcut kuyruğa ekler. Tekrarlanan video aynı sıraya iki kez eklenmez.
+Durdur düğmesi tüm alt işlemleri durdurur. Aynı link ve aynı ayarlarla
+aynı videoları seçip yeniden başlatınca biten videolar atlanır,
+yarım dosyalar devam eder.
+Program kapanırken çalışan indirme de durdurulur.
+
+Varsayılan kayıt klasörü proje içindeki Indirmeler klasörüdür.
+Alt klasör seçeneği varsayılan olarak kapalıdır.
+Örnek: Indirmeler\Başlık.mp4; alt klasör açıkken Indirmeler\UHF\Başlık.mp4
+Dosya adı yalnızca video/şarkı başlığıdır: Başlık.mp4 veya Başlık.mp3.
+Tarih ve video kimliği eklenmez. Aynı klasörde aynı başlıklı farklı
+videolar varsa üzerine yazmayı önlemek için (2), (3) eklenir.
+Windows'un dosya adında kabul etmediği karakterler düzenlenir.
+
+En yüksek: YouTube'un sunduğu en yüksek çözünürlük ve kare hızı.
+1080p vb.: bu çözünürlüğe kadar en iyi mevcut görüntü; büyütme yapılmaz.
+MP4 dosyası yeniden sıkıştırılmaz. En yüksek kalitedeki VP9/AV1 videolar
+da MP4 içinde saklanır; oynatıcı bu kodekleri desteklemelidir.
+MP3: seçilen bit hızında ses dönüşümü yapılır. 320 kbps, kaynağın gerçek
+ses kalitesini artırmaz; yalnızca MP3 çıkışının bit hızını seçer.
+
+Videolar + Shorts + yayın kayıtları seçeneği üç sekmeyi kapsar.
+Devam eden ve henüz başlamayan yayınlar atlanır.
+Özel, silinmiş, üyelik isteyen veya erişim engeli olan videoların
+indirilmesi garanti değildir. Hatalı video atlanır ve sıraya devam edilir.
+İşlem kaydı düğmesi hata ayrıntılarını açar.
+
+Bilgisayar açık ve internete bağlı olmalıdır. Diskte 3 GB'dan az boş alan
+kaldığında indirme kesilir. Uygulama bu bilgisayardaki Node.js'i kullanır;
+yt-dlp, JavaScript çözümleyicisi ve FFmpeg programla birlikte paketlenir.
+
+Eski UHFklip indirmesi durdurulmuştur. O klasördeki dosyalar korunmuştur.
+Bu program önceki indir.py işlemini otomatik olarak başlatmaz.

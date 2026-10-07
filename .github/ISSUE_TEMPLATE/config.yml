@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Topluluk / Discussions
+    url: https://github.com/Tekniva-AI/tekniva-yt-downloader/discussions
+    about: Sorular ve fikirler / Questions and ideas
+  - name: Güvenlik bildirimi / Security report
+    url: https://github.com/Tekniva-AI/tekniva-yt-downloader/blob/main/SECURITY.md
+    about: Özel bildirim yolu / Private reporting instructions

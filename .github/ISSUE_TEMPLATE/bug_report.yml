@@ -1,0 +1,30 @@
+name: Hata bildirimi / Bug report
+description: Yeniden oluşturulabilir bir hata bildirin / Report a reproducible bug
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: "Kayıtlardaki kişisel yolları ve özel bağlantıları temizleyin. Güvenlik açıkları için SECURITY.md kullanın."
+  - type: input
+    id: version
+    attributes:
+      label: Uygulama sürümü / App version
+      placeholder: beta 0.1.4
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows ve Node.js sürümü / Windows and Node.js version
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Adımlar, beklenen ve gerçek sonuç / Steps, expected and actual result
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Temizlenmiş kayıt veya ekran görüntüsü / Sanitized log or screenshot
