@@ -1,17 +1,17 @@
 # Tekniva YT Downloader
 
-[![Version](https://img.shields.io/badge/version-beta%200.1.5-blue)](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases)
+[![Version](https://img.shields.io/badge/version-beta%200.1.6-blue)](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases)
 [![Windows](https://img.shields.io/badge/platform-Windows%20x64-0078D4)](#kurulum)
 [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-green)](LICENSE)
 [![Tests](https://github.com/Tekniva-AI/tekniva-yt-downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/Tekniva-AI/tekniva-yt-downloader/actions/workflows/ci.yml)
 
 YouTube ve YouTube Music bağlantılarından seçtiğiniz videoları **MP4**, şarkıları **kapak resmi içeren MP3** olarak indiren, yedi dil destekli açık kaynak Windows masaüstü uygulaması.
 
-**[Windows için indir →](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.5-beta)** · [Değişiklikler](CHANGELOG.md) · [Katkıda bulun](CONTRIBUTING.md) · [Topluluk](https://github.com/Tekniva-AI/tekniva-yt-downloader/discussions) · [Instagram](https://www.instagram.com/tekniva.com.tr/)
+**[Windows için indir →](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.6-beta)** · [Değişiklikler](CHANGELOG.md) · [Katkıda bulun](CONTRIBUTING.md) · [Topluluk](https://github.com/Tekniva-AI/tekniva-yt-downloader/discussions) · [Instagram](https://www.instagram.com/tekniva.com.tr/)
 
 ## Ekran görüntüleri
 
-Görseller beta 0.1.4 arayüzünü gösterir; beta 0.1.5 ek olarak uygulama içinden bileşen kurulumu sunar. Listelerdeki içerikler tanıtım için hazırlanmış örneklerdir.
+Görseller beta 0.1.4 arayüzünü gösterir; beta 0.1.6 ek olarak uygulama içinden bileşen kurulumu sunar. Listelerdeki içerikler tanıtım için hazırlanmış örneklerdir.
 
 ### Koyu görünüm
 
@@ -41,7 +41,7 @@ Görseller beta 0.1.4 arayüzünü gösterir; beta 0.1.5 ek olarak uygulama içi
 
 ## Kurulum
 
-1. [Release sayfasından](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.5-beta) `Tekniva-YT-Downloader-0.1.5-Windows-x64.zip` dosyasını indirin.
+1. [Release sayfasından](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.6-beta) `Tekniva-YT-Downloader-0.1.6-Windows-x64.zip` dosyasını indirin.
 2. ZIP'i yazma izniniz olan bir klasöre çıkarın. Uygulamayı ZIP'in içinden çalıştırmayın.
 3. Node.js eksik veya eskiyse ilk listeleme/indirme işleminde uygulama kurulum onayı ister. **Evet** seçildiğinde resmi Node.js bileşeni otomatik indirilir, doğrulanır ve uygulama klasörüne eklenir. İşlem daha sonra kendiliğinden devam eder.
 4. `Tekniva YT Downloader.exe` dosyasını açın. Python, FFmpeg ve aria2 pakete dahildir. Tek EXE indirdiyseniz onu da yazılabilir bir klasöre koyup açın; aynı otomatik bileşen kurulumu çalışır.
@@ -55,7 +55,7 @@ Release içinde taşınabilir ZIP, ayrı EXE ve `SHA256SUMS.txt` bulunur. Kaynak
 İndirilen dosyanın bütünlüğünü kontrol etmek için PowerShell'de:
 
 ```powershell
-Get-FileHash .\Tekniva-YT-Downloader-0.1.5-Windows-x64.zip -Algorithm SHA256
+Get-FileHash .\Tekniva-YT-Downloader-0.1.6-Windows-x64.zip -Algorithm SHA256
 ```
 
 Çıkan değeri release içindeki `SHA256SUMS.txt` ile karşılaştırın.
@@ -131,7 +131,7 @@ py -3.13 -m venv .venv
 
 Temel testler yerel HTTP sunucusu ve sentetik medya kullanır; YouTube'dan gerçek şarkı indirmez. Tema doğrulaması görünür test pencereleri açar. `--rebuild` mevcut sürümü tekrar paketler; seçenek verilmezse patch sürümü artar. Sürümün tek kaynağı `program/translations.py` içindeki `VERSION` değeridir. Sürüm yayımlarken changelog ve README bağlantılarını da güncelleyin.
 
-Tag `v0.1.5-beta` biçimindedir. `release.yml` sürümü tag ile karşılaştırır, testleri çalıştırır ve temiz Windows ZIP/EXE/checksum dosyalarını **taslak release** olarak oluşturur. Maintainer test edip taslağı yayımlar. CI `main` push ve pull request'lerinde testleri çalıştırır.
+Tag `v0.1.6-beta` biçimindedir. `release.yml` sürümü tag ile karşılaştırır, testleri çalıştırır ve temiz Windows ZIP/EXE/checksum dosyalarını **taslak release** olarak oluşturur. Maintainer test edip taslağı yayımlar. CI `main` push ve pull request'lerinde testleri çalıştırır.
 
 Gerçek dağıtım doğrulaması için paketlemeden sonra `python program/test_portable_release.py` çalıştırın. Bu isteğe bağlı test internetten resmi Node.js'i indirir; sistem Node.js'i görünmez yapan izole klasörlerde hem EXE hem ZIP ilk kurulumu ve sonraki açılışı denetler. Release iş akışı bu kontrolü otomatik çalıştırır.
 

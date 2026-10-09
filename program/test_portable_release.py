@@ -15,7 +15,8 @@ def verify():
     environment = dict(os.environ)
     environment['PATH'] = str(Path(os.environ['SystemRoot']) / 'System32')
     with tempfile.TemporaryDirectory(prefix='tekniva-portable-') as directory:
-        root = Path(directory)
+        # Hosted Windows runners may use 8.3 names or junctions for TEMP.
+        root = Path(directory).resolve()
         standalone = root / 'Standalone EXE'
         standalone.mkdir()
         import shutil
@@ -36,7 +37,7 @@ def verify():
             installed = json.loads(report.read_text())
             assert installed['ok'], installed
             node = Path(installed['node_path'])
-            assert node.is_relative_to(app.parent) and node.is_file()
+            assert node.resolve().is_relative_to(app.parent.resolve()) and node.is_file(), (node, app.parent)
             assert (node.parent / 'LICENSE').is_file()
             run('--check', report)
             dependencies = json.loads(report.read_text())

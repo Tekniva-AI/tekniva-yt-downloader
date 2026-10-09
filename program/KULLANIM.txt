@@ -1,4 +1,4 @@
-TEKNIVA YT DOWNLOADER — beta 0.1.5
+TEKNIVA YT DOWNLOADER — beta 0.1.6
 
 YENİ ÖZELLİKLER — beta 0.1.5
 Node.js eksik veya eskiyse program kurulum onayı sorar. Evet seçildiğinde

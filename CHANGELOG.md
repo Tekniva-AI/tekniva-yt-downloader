@@ -2,6 +2,15 @@
 
 Yayımlanan kullanıcı güncellemelerinde sürüm numarası artırılır. Beta sürümleri GitHub'da prerelease olarak işaretlenir.
 
+## [0.1.6-beta](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.6-beta) — 2026-10-09
+
+### Düzeltildi
+
+- Temiz Windows dağıtım testinde kısa TEMP adları ve klasör bağlantıları gerçek dosya yoluna çözülerek karşılaştırılır.
+- EXE/ZIP otomatik Node.js kurulumunun GitHub Windows ortamında doğrulanması düzeltildi.
+
+0.1.5'teki onaylı otomatik Node.js kurulumu, yüzde, iptal ve işleme devam özellikleri bu sürümde de bulunur.
+
 ## [0.1.5-beta](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.5-beta) — 2026-10-09
 
 ### Eklendi
