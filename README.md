@@ -1,17 +1,17 @@
 # Tekniva YT Downloader
 
-[![Version](https://img.shields.io/badge/version-beta%200.1.4-blue)](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases)
+[![Version](https://img.shields.io/badge/version-beta%200.1.5-blue)](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases)
 [![Windows](https://img.shields.io/badge/platform-Windows%20x64-0078D4)](#kurulum)
 [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-green)](LICENSE)
 [![Tests](https://github.com/Tekniva-AI/tekniva-yt-downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/Tekniva-AI/tekniva-yt-downloader/actions/workflows/ci.yml)
 
 YouTube ve YouTube Music bağlantılarından seçtiğiniz videoları **MP4**, şarkıları **kapak resmi içeren MP3** olarak indiren, yedi dil destekli açık kaynak Windows masaüstü uygulaması.
 
-**[Windows için indir →](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.4-beta)** · [Değişiklikler](CHANGELOG.md) · [Katkıda bulun](CONTRIBUTING.md) · [Topluluk](https://github.com/Tekniva-AI/tekniva-yt-downloader/discussions) · [Instagram](https://www.instagram.com/tekniva.com.tr/)
+**[Windows için indir →](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.5-beta)** · [Değişiklikler](CHANGELOG.md) · [Katkıda bulun](CONTRIBUTING.md) · [Topluluk](https://github.com/Tekniva-AI/tekniva-yt-downloader/discussions) · [Instagram](https://www.instagram.com/tekniva.com.tr/)
 
 ## Ekran görüntüleri
 
-Görseller gerçek uygulamanın beta 0.1.4 arayüzünden alınmıştır. Listelerdeki içerikler tanıtım için hazırlanmış örneklerdir.
+Görseller beta 0.1.4 arayüzünü gösterir; beta 0.1.5 ek olarak uygulama içinden bileşen kurulumu sunar. Listelerdeki içerikler tanıtım için hazırlanmış örneklerdir.
 
 ### Koyu görünüm
 
@@ -41,10 +41,12 @@ Görseller gerçek uygulamanın beta 0.1.4 arayüzünden alınmıştır. Listele
 
 ## Kurulum
 
-1. [Release sayfasından](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.4-beta) `Tekniva-YT-Downloader-0.1.4-Windows-x64.zip` dosyasını indirin.
+1. [Release sayfasından](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.5-beta) `Tekniva-YT-Downloader-0.1.5-Windows-x64.zip` dosyasını indirin.
 2. ZIP'i yazma izniniz olan bir klasöre çıkarın. Uygulamayı ZIP'in içinden çalıştırmayın.
-3. YouTube'un JavaScript işlemleri için [Node.js](https://nodejs.org/en/download) kurulu olmalıdır. Node.js 22 veya üstü kullanın; kurulumdan sonra uygulamayı yeniden açın.
-4. `Tekniva YT Downloader.exe` dosyasını açın. Python kurulumu gerekmez. FFmpeg ve aria2 pakete dahildir.
+3. Node.js eksik veya eskiyse ilk listeleme/indirme işleminde uygulama kurulum onayı ister. **Evet** seçildiğinde resmi Node.js bileşeni otomatik indirilir, doğrulanır ve uygulama klasörüne eklenir. İşlem daha sonra kendiliğinden devam eder.
+4. `Tekniva YT Downloader.exe` dosyasını açın. Python, FFmpeg ve aria2 pakete dahildir. Tek EXE indirdiyseniz onu da yazılabilir bir klasöre koyup açın; aynı otomatik bileşen kurulumu çalışır.
+
+Eksik Node.js için sistem kurulumu, PATH değişikliği veya yönetici izni gerekmez. Uygulama `tools/node-v22.23.3/node.exe` ve Node.js lisansını kendi klasöründe tutar. EXE ve ZIP aynı davranışı sunar. İlk bileşen kurulumu internet bağlantısı gerektirir; sonraki açılışlarda yerel kopya yeniden kullanılır. İndirme sırasında yüzde gösterilir ve iptal edilebilir. Onayı reddetmek işlemi başlatmaz; daha sonra yeniden deneyebilirsiniz.
 
 Hedef platform Windows 10/11, 64 bit. macOS/Linux paketleri şu anda yayımlanmıyor. Uygulama beta aşamasındadır ve Windows için kod imzası bulunmaz.
 
@@ -53,7 +55,7 @@ Release içinde taşınabilir ZIP, ayrı EXE ve `SHA256SUMS.txt` bulunur. Kaynak
 İndirilen dosyanın bütünlüğünü kontrol etmek için PowerShell'de:
 
 ```powershell
-Get-FileHash .\Tekniva-YT-Downloader-0.1.4-Windows-x64.zip -Algorithm SHA256
+Get-FileHash .\Tekniva-YT-Downloader-0.1.5-Windows-x64.zip -Algorithm SHA256
 ```
 
 Çıkan değeri release içindeki `SHA256SUMS.txt` ile karşılaştırın.
@@ -97,14 +99,14 @@ MP3 320 kbps seçimi kaynak ses kalitesini artırmaz; daha düşük kaliteli kay
 |---|---|
 | Liste boş görünüyor | Aramayı temizleyin, bağlantının desteklenen bir YouTube adresi olduğunu kontrol edin ve işlem kaydını açın. |
 | HTTP 403 / 429 | Bir süre bekleyin, uygulamanın yeni sürümünü kontrol edin ve daha az bağlantılı modu deneyin. Kaydı kişisel bilgileri temizleyerek hata bildirimine ekleyin. |
-| JavaScript / Node bulunamadı | Node.js 22+ kurulumunu ve uygulamayı yeniden başlattığınızı kontrol edin. |
+| Node.js hazırlanamadı | İnternet bağlantısını ve uygulama klasörüne yazma iznini kontrol edip tekrar deneyin. Uygulamayı ZIP içinden açmak yerine çıkarın. |
 | MP3 kapağı oynatıcıda görünmüyor | Dosyada gömülü kapak olsa bile oynatıcı eski bilgiyi önbelleğe almış olabilir. Yeni dosya adıyla bir kopyada kontrol edin. Kaynağın küçük resim sağlaması gerekir. |
 | Daha önce indirilen dosya silindi | Aynı biçim/kaliteyle tekrar indirin; uygulama dosyanın gerçekten mevcut ve dolu olduğunu kontrol eder. |
 | MP4 eski cihazda açılmıyor | Cihazın VP9/AV1/Opus desteğini kontrol edin. Uygulamada şu an ayrı H.264/AAC dönüştürme modu yoktur. |
 
 ## Kaynaktan çalıştırma
 
-Windows'ta Python 3.13, Git ve Node.js 22+ kurulu olmalıdır. Komutlar depo kökünde çalıştırılır:
+Windows'ta Python 3.13 ve Git kurulu olmalıdır. Node.js 22+ sistemde bulunabilir; bulunmazsa uygulama onayınızla yerel kopyayı hazırlar. Komutlar depo kökünde çalıştırılır:
 
 ```powershell
 git clone https://github.com/Tekniva-AI/tekniva-yt-downloader.git
@@ -115,12 +117,13 @@ py -3.13 -m venv .venv
 .\.venv\Scripts\python.exe program/kanal_indirici.py
 ```
 
-`bootstrap_tools.py` resmi aria2 1.37.0 Windows paketini indirir, sabit SHA-256 değerini doğrular ve gerekli aracı çıkarır. FFmpeg Python bağımlılığı ile gelir. Node.js sistemde bulunur; uygulama bu aşamada Node.js indirmez.
+`bootstrap_tools.py` resmi aria2 1.37.0 Windows paketini indirir, sabit SHA-256 değerini doğrular ve gerekli aracı çıkarır. FFmpeg Python bağımlılığı ile gelir. Node.js için ilk işlem sırasında aynı onaylı uygulama içi kurulum kullanılır. İndirilen Node.js ZIP dosyası sabit SHA-256 ile doğrulanır; yalnızca çalıştırılabilir dosya ve lisans çıkarılır, npm veya sistem kurulum betikleri çalıştırılmaz. Resmi sürüm/checksum: https://nodejs.org/dist/v22.23.3/SHASUMS256.txt.
 
 ### Test ve paketleme
 
 ```powershell
 .\.venv\Scripts\python.exe program/test_program.py
+.\.venv\Scripts\python.exe program/test_dependencies.py
 .\.venv\Scripts\python.exe program/verify_theme.py
 .\.venv\Scripts\python.exe program/build_release.py --rebuild
 .\.venv\Scripts\python.exe program/package_release.py
@@ -128,7 +131,9 @@ py -3.13 -m venv .venv
 
 Temel testler yerel HTTP sunucusu ve sentetik medya kullanır; YouTube'dan gerçek şarkı indirmez. Tema doğrulaması görünür test pencereleri açar. `--rebuild` mevcut sürümü tekrar paketler; seçenek verilmezse patch sürümü artar. Sürümün tek kaynağı `program/translations.py` içindeki `VERSION` değeridir. Sürüm yayımlarken changelog ve README bağlantılarını da güncelleyin.
 
-Tag `v0.1.4-beta` biçimindedir. `release.yml` sürümü tag ile karşılaştırır, testleri çalıştırır ve temiz Windows ZIP/EXE/checksum dosyalarını **taslak release** olarak oluşturur. Maintainer test edip taslağı yayımlar. CI `main` push ve pull request'lerinde testleri çalıştırır.
+Tag `v0.1.5-beta` biçimindedir. `release.yml` sürümü tag ile karşılaştırır, testleri çalıştırır ve temiz Windows ZIP/EXE/checksum dosyalarını **taslak release** olarak oluşturur. Maintainer test edip taslağı yayımlar. CI `main` push ve pull request'lerinde testleri çalıştırır.
+
+Gerçek dağıtım doğrulaması için paketlemeden sonra `python program/test_portable_release.py` çalıştırın. Bu isteğe bağlı test internetten resmi Node.js'i indirir; sistem Node.js'i görünmez yapan izole klasörlerde hem EXE hem ZIP ilk kurulumu ve sonraki açılışı denetler. Release iş akışı bu kontrolü otomatik çalıştırır.
 
 ## Proje yapısı
 
@@ -138,6 +143,8 @@ program/
   tekniva_gui.py      Tkinter masaüstü arayüzü
   translations.py    Yedi dil ve sürüm
   test_program.py    Yerel medya ve arayüz testleri
+  dependencies.py    Onaylı yerel Node.js kurulumu
+  test_dependencies.py Kurulum, iptal ve doğrulama testleri
   bootstrap_tools.py Doğrulanmış aria2 hazırlığı
   build_release.py   PyInstaller Windows paketi
   package_release.py Temiz dağıtım ve SHA-256
@@ -159,8 +166,8 @@ Copyright © 2026 Tekniva. Proje **GPL-3.0-or-later** lisansı ile paylaşılır
 
 **Tekniva YT Downloader** is an open-source Windows desktop app for selectively downloading YouTube and YouTube Music content as MP4 or MP3 with embedded cover art. It supports queues, searching, sortable lists, seven interface languages, light/dark themes and optional channel/artist/playlist folders.
 
-Download the portable Windows x64 ZIP from [Releases](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases). Extract it to a writable directory and launch `Tekniva YT Downloader.exe`. Python is bundled; install Node.js 22+ separately for YouTube JavaScript processing. FFmpeg and aria2 are included. Paste a video/channel/playlist link, fetch the list or append it to the queue, choose format/quality, select rows and download.
+Download the portable Windows x64 ZIP from [Releases](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases). Extract it to a writable directory and launch `Tekniva YT Downloader.exe`. Python is bundled. If a compatible Node.js runtime is missing, the app asks for consent, downloads a checksum-verified official portable runtime into its own folder, and resumes your operation. No administrator access, PATH changes or separate system installation are needed. The standalone EXE works the same way as the ZIP distribution. FFmpeg and aria2 are included. Paste a video/channel/playlist link, fetch the list or append it to the queue, choose format/quality, select rows and download.
 
-Source setup: Python 3.13 + Node.js 22+, install `requirements-dev.txt`, run `program/bootstrap_tools.py`, then `program/kanal_indirici.py`. Tests: `python program/test_program.py`. Build the current version: `python program/build_release.py --rebuild`, then `python program/package_release.py`. Omit `--rebuild` only when intentionally incrementing the patch version.
+Source setup: Python 3.13; Node.js can be provided by the same consent-based local installer, install `requirements-dev.txt`, run `program/bootstrap_tools.py`, then `program/kanal_indirici.py`. Tests: `python program/test_program.py`. Build the current version: `python program/build_release.py --rebuild`, then `python program/package_release.py`. Omit `--rebuild` only when intentionally incrementing the patch version.
 
 Contributions are welcome through forks and pull requests. Report bugs in Issues and discuss ideas in Discussions. Network availability and download speed depend on YouTube; access restrictions cannot be guaranteed away. MP4 preserves available codecs and may require a modern player. MP3 conversion cannot improve source fidelity. Licensed under GPL-3.0-or-later; bundled components retain their own licenses.

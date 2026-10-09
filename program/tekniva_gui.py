@@ -7,6 +7,9 @@ import sys
 import time
 import uuid
 import webbrowser
+import threading
+import queue
+from dependencies import node_path, install_node, InstallCancelled
 from pathlib import Path
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
@@ -21,6 +24,10 @@ def run_gui(test_callback=None):
         def __init__(self, root):
             self.root = root
             self.process = self.events_file = self.log_file = self.actual_folder = None
+            self.installing = False
+            self.install_events = queue.SimpleQueue()
+            self.install_cancel = threading.Event()
+            self.install_dialog = None
             self.event_offset = 0
             self.event_buffer = ''
             self.got_final = self.stopping = False
@@ -465,10 +472,10 @@ def run_gui(test_callback=None):
 
         def update_selection(self):
             self.selection_text.set(self.t('summary', total=len(self.entries), visible=len(self.visible_ids), selected=len(self.selected_ids)))
-            self.start_btn.configure(state='normal' if self.entries and self.selected_ids and not self.process else 'disabled')
+            self.start_btn.configure(state='normal' if self.entries and self.selected_ids and not self.process and not self.installing else 'disabled')
             for widget in (self.all_btn, self.clear_btn, self.results_btn, self.remove_btn):
-                widget.configure(state='normal' if self.entries and not self.process else 'disabled')
-            self.failed_btn.configure(state='normal' if any(s[0] == 'failed' for s in self.states.values()) and not self.process else 'disabled')
+                widget.configure(state='normal' if self.entries and not self.process and not self.installing else 'disabled')
+            self.failed_btn.configure(state='normal' if any(s[0] == 'failed' for s in self.states.values()) and not self.process and not self.installing else 'disabled')
 
         def apply_search(self, *args):
             words = search_text(self.search.get()).split()
@@ -588,8 +595,76 @@ def run_gui(test_callback=None):
             self.stop_btn.configure(state='normal' if active else 'disabled')
             self.update_selection()
 
+        def offer_node_install(self, action):
+            if not messagebox.askyesno(self.t('dependencies'), self.t('node_install_question'), parent=self.root):
+                self.status.set(self.t('node_install_declined'))
+                return
+            self.installing = True
+            self.install_action = action
+            self.install_cancel.clear()
+            self.busy(True)
+            self.stop_btn.configure(state='disabled')
+            dialog = tk.Toplevel(self.root)
+            self.install_dialog = dialog
+            dialog.title(self.t('dependencies'))
+            dialog.transient(self.root)
+            dialog.resizable(False, False)
+            frame = ttk.Frame(dialog, padding=20)
+            frame.pack(fill='both', expand=True)
+            ttk.Label(frame, text='Node.js', font=('Segoe UI', 14, 'bold')).pack(anchor='w')
+            self.install_label = ttk.Label(frame, text=self.t('node_install_downloading', percent=0), wraplength=380)
+            self.install_label.pack(anchor='w', pady=(10, 8))
+            self.install_bar = ttk.Progressbar(frame, maximum=100, length=380)
+            self.install_bar.pack(fill='x')
+            self.install_cancel_btn = ttk.Button(frame, text=self.t('cancel'), command=self.cancel_node_install)
+            self.install_cancel_btn.pack(anchor='e', pady=(12, 0))
+            dialog.protocol('WM_DELETE_WINDOW', self.cancel_node_install)
+            dialog.bind('<Escape>', lambda event: self.cancel_node_install())
+            self.apply_theme()
+            dialog.grab_set()
+            self.status.set(self.t('node_install_downloading', percent=0))
+
+            def worker():
+                try:
+                    install_node(APP_DIR, lambda phase, percent: self.install_events.put(('progress', phase, percent)), self.install_cancel)
+                    self.install_events.put(('done',))
+                except InstallCancelled:
+                    self.install_events.put(('cancelled',))
+                except Exception as error:
+                    self.install_events.put(('failed', str(error)))
+            threading.Thread(target=worker, name='Node-runtime-install', daemon=True).start()
+
+        def cancel_node_install(self):
+            self.install_cancel.set()
+            self.install_cancel_btn.configure(state='disabled')
+            self.install_label.configure(text=self.t('stopping'))
+
+        def poll_install(self):
+            while not self.install_events.empty():
+                event = self.install_events.get()
+                if event[0] == 'progress':
+                    if not self.install_cancel.is_set():
+                        text = self.t('node_install_verifying') if event[1] == 'verify' else self.t('node_install_downloading', percent=f'{event[2]:.0f}')
+                        self.install_label.configure(text=text)
+                        self.install_bar['value'] = event[2]
+                        self.status.set(text)
+                    continue
+                self.installing = False
+                if self.install_dialog:
+                    self.install_dialog.grab_release()
+                    self.install_dialog.destroy()
+                    self.install_dialog = None
+                self.busy(False)
+                if event[0] == 'done' and not self.install_cancel.is_set():
+                    self.root.after(0, lambda action=self.install_action: self.start(action))
+                elif event[0] == 'failed':
+                    self.status.set(self.t('error'))
+                    messagebox.showerror(self.t('dependencies'), self.t('node_install_failed', error=event[1]), parent=self.root)
+                else:
+                    self.status.set(self.t('stopped'))
+
         def start(self, action):
-            if self.process:
+            if self.process or self.installing:
                 return
             try:
                 selected_entries = []
@@ -609,8 +684,9 @@ def run_gui(test_callback=None):
                 folder.mkdir(parents=True, exist_ok=True)
                 if action == 'download' and shutil.disk_usage(folder).free < 3 * 1024**3:
                     raise ValueError(self.t('disk'))
-                if not shutil.which('node'):
-                    raise ValueError(self.t('node'))
+                if not node_path(APP_DIR):
+                    self.offer_node_install(action)
+                    return
                 self.save_settings()
                 job_dir = APP_DIR / 'islem-kayitlari'
                 job_dir.mkdir(exist_ok=True)
@@ -739,6 +815,7 @@ def run_gui(test_callback=None):
                 self.save_queue()
 
         def poll(self):
+            self.poll_install()
             if self.events_file and self.events_file.exists():
                 with self.events_file.open('r', encoding='utf-8') as handle:
                     handle.seek(self.event_offset)
@@ -791,6 +868,9 @@ def run_gui(test_callback=None):
                 messagebox.showinfo(self.t('log'), self.t('no_log'))
 
         def close(self):
+            if self.installing:
+                self.cancel_node_install()
+                return
             if self.process and self.process.poll() is None:
                 if not messagebox.askyesno(self.t('close'), self.t('close_question')):
                     return

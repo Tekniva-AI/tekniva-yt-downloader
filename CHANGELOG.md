@@ -2,6 +2,21 @@
 
 Yayımlanan kullanıcı güncellemelerinde sürüm numarası artırılır. Beta sürümleri GitHub'da prerelease olarak işaretlenir.
 
+## [0.1.5-beta](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.5-beta) — 2026-10-09
+
+### Eklendi
+
+- Eksik/eski Node.js için uygulama içi onaylı, otomatik taşınabilir kurulum.
+- Resmi Node.js 22.23.3 Windows x64 arşivinin sabit SHA-256 ile doğrulanması.
+- Uygulama klasöründeki yerel Node.js'in listeleme, sanatçı çözümleme ve indirmede kullanılması.
+- Kurulum yüzdesi, iptal, hata sonrası tekrar deneme ve tamamlanınca ilk işleme otomatik dönüş.
+- Node.js bulunmayan ortamda EXE ve ZIP için gerçek kurulum/açılış doğrulaması.
+
+### Değiştirildi
+
+- Kullanıcının Node.js'i ayrıca edinme zorunluluğu kaldırıldı. Yönetici izni, sistem kurulumu ve PATH değişikliği gerekmez.
+- README, kullanım belgesi, lisans bildirimleri ve release notları yeni ilk kullanım akışına uyarlandı.
+
 ## [0.1.4-beta](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.4-beta) — 2026-10-07
 
 ### Eklendi

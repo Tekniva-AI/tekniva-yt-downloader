@@ -1,4 +1,12 @@
-TEKNIVA YT DOWNLOADER — beta 0.1.4
+TEKNIVA YT DOWNLOADER — beta 0.1.5
+
+YENİ ÖZELLİKLER — beta 0.1.5
+Node.js eksik veya eskiyse program kurulum onayı sorar. Evet seçildiğinde
+resmi bileşen otomatik indirilip doğrulanarak uygulama klasörüne eklenir.
+İndirme yüzdesi gösterilir, kurulum iptal edilebilir. Bitince asıl işlem devam eder.
+EXE ve ZIP paketlerinde aynı şekilde çalışır. Yönetici izni, PATH değişikliği
+veya ayrı Node.js sistem kurulumu gerekmez. İlk hazırlık internet gerektirir.
+Uygulamayı yazılabilir bir klasörde açın; ZIP dosyasını önce çıkarın.
 
 YENİ ÖZELLİKLER — beta 0.1.4
 Alt çubukta Instagram simgesine tıklayarak Tekniva hesabını açabilirsiniz.
@@ -136,8 +144,6 @@ indirilmesi garanti değildir. Hatalı video atlanır ve sıraya devam edilir.
 İşlem kaydı düğmesi hata ayrıntılarını açar.
 
 Bilgisayar açık ve internete bağlı olmalıdır. Diskte 3 GB'dan az boş alan
-kaldığında indirme kesilir. Uygulama bu bilgisayardaki Node.js'i kullanır;
+kaldığında indirme kesilir. Uygulama önce kendi klasöründeki Node.js'i,
+sonra sistemdeki uyumlu sürümü kullanır. Eksikse onayla yerel kurulum yapar.
 yt-dlp, JavaScript çözümleyicisi ve FFmpeg programla birlikte paketlenir.
-
-Eski UHFklip indirmesi durdurulmuştur. O klasördeki dosyalar korunmuştur.
-Bu program önceki indir.py işlemini otomatik olarak başlatmaz.

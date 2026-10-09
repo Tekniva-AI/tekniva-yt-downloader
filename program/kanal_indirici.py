@@ -16,6 +16,7 @@ from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 
 APP_DIR = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
+from dependencies import node_path, node_runtime_options, install_node
 PROJECT = APP_DIR.parent
 NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
 VIDEO_QUALITIES = ['En yüksek', '2160p (4K)', '1440p (2K)', '1080p', '720p', '480p', '360p']
@@ -125,7 +126,7 @@ def get_entries(job, logger):
     entries, seen = [], set()
     channel_title, skipped_live = '', 0
     with yt_dlp.YoutubeDL({'extract_flat': 'in_playlist', 'skip_download': True, 'noplaylist': source_type != 'playlist',
-                          'logger': logger, 'socket_timeout': 25, 'js_runtimes': {'node': {}}}) as ydl:
+                          'logger': logger, 'socket_timeout': 25, 'js_runtimes': node_runtime_options(APP_DIR)}) as ydl:
         urls = [base] if source_type != 'channel' else [base + '/' + tab for tab in (['videos', 'shorts', 'streams'] if job['all_tabs'] else ['videos'])]
         for url in urls:
             try:
@@ -155,7 +156,7 @@ def make_options(job, folder, logger, hooks):
     import imageio_ffmpeg
     options = {
         'ffmpeg_location': imageio_ffmpeg.get_ffmpeg_exe(),
-        'js_runtimes': {'node': {}},
+        'js_runtimes': node_runtime_options(APP_DIR),
         'outtmpl': str(folder / '%(title).180B.%(ext)s'),
         'windowsfilenames': True,
         'download_archive': str(metadata_paths(folder, job)['archive']),
@@ -430,7 +431,7 @@ def run_worker(job_path):
             if job.get('artist_subfolders') and not entry.get('artist'):
                 # Flat channel/playlist listings may omit music metadata.
                 with yt_dlp.YoutubeDL({'skip_download': True, 'noplaylist': True, 'logger': logger,
-                                      'socket_timeout': 25, 'js_runtimes': {'node': {}}}) as resolver:
+                                      'socket_timeout': 25, 'js_runtimes': node_runtime_options(APP_DIR)}) as resolver:
                     try:
                         details = resolver.extract_info(entry['url'], download=False) or {}
                         entry['artist'] = details.get('artist') or ', '.join(details.get('artists') or [])
@@ -492,13 +493,22 @@ def run_gui(test_callback=None):
 if __name__ == '__main__':
     if len(sys.argv) >= 3 and sys.argv[1] == '--worker':
         sys.exit(run_worker(sys.argv[2]))
+    elif len(sys.argv) >= 3 and sys.argv[1] == '--install-node':
+        try:
+            installed = install_node(APP_DIR)
+            result = {'ok': True, 'node_path': installed}
+        except Exception as error:
+            result = {'ok': False, 'error': str(error)}
+        Path(sys.argv[2]).write_text(json.dumps(result), encoding='utf-8')
+        sys.exit(0 if result['ok'] else 1)
     elif len(sys.argv) >= 3 and sys.argv[1] == '--check':
         import imageio_ffmpeg
         import yt_dlp
         import yt_dlp_ejs
         ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
         check = subprocess.run([ffmpeg, '-version'], capture_output=True, creationflags=NO_WINDOW)
-        Path(sys.argv[2]).write_text(json.dumps({'ffmpeg': check.returncode == 0, 'node': bool(shutil.which('node')),
+        runtime = node_path(APP_DIR)
+        Path(sys.argv[2]).write_text(json.dumps({'ffmpeg': check.returncode == 0, 'node': bool(runtime), 'node_path': runtime,
                                                 'aria2': bool(aria2_path()), 'yt_dlp': yt_dlp.version.__version__,
                                                 'ejs': str(yt_dlp_ejs.__file__)}, indent=2), encoding='utf-8')
     else:
