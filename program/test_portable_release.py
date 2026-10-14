@@ -14,6 +14,7 @@ def verify():
     stem = f'Tekniva-YT-Downloader-{number}-Windows-x64'
     environment = dict(os.environ)
     environment['PATH'] = str(Path(os.environ['SystemRoot']) / 'System32')
+    environment['IMAGEIO_FFMPEG_EXE'] = str(Path(os.environ['SystemRoot']) / 'missing-old-ffmpeg.exe')
     with tempfile.TemporaryDirectory(prefix='tekniva-portable-') as directory:
         # Hosted Windows runners may use 8.3 names or junctions for TEMP.
         root = Path(directory).resolve()
@@ -42,6 +43,11 @@ def verify():
             run('--check', report)
             dependencies = json.loads(report.read_text())
             assert dependencies['node'] and dependencies['ffmpeg'] and dependencies['aria2'], dependencies
+            assert dependencies['ejs_ready'] and dependencies['tls_bundle'], dependencies
+            run('--verify-media', report)
+            media = json.loads(report.read_text(encoding='utf-8'))
+            assert media['ok'], media
+            print(label + ': packaged media pipeline ' + json.dumps(media['cases']), flush=True)
             run('--gui-smoke')
             print(label + ': no system Node, official download, local runtime, FFmpeg/aria2 and GUI verified.', flush=True)
 

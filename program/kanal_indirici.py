@@ -16,12 +16,31 @@ from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 
 APP_DIR = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
-from dependencies import node_path, node_runtime_options, install_node
+from dependencies import node_path, node_runtime_options, install_node, ffmpeg_path
 PROJECT = APP_DIR.parent
 NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
 VIDEO_QUALITIES = ['En yüksek', '2160p (4K)', '1440p (2K)', '1080p', '720p', '480p', '360p']
 AUDIO_QUALITIES = ['320 kbps', '192 kbps', '128 kbps']
-SPEED_MODES = ['Hızlı (8 bağlantı)', 'Dengeli (4 bağlantı)', 'Uyumlu (1 bağlantı)']
+SPEED_MODES = ['Otomatik (önerilen)', 'Hızlı (8 bağlantı)', 'Dengeli (4 bağlantı)', 'Uyumlu (1 bağlantı)']
+
+
+def connection_count(job):
+    return {'Hızlı (8 bağlantı)': 8, 'Uyumlu (1 bağlantı)': 1}.get(job.get('speed'), 4)
+
+
+def error_code(error):
+    text = str(error).casefold()
+    if any(word in text for word in ('429', 'too many requests', 'try again later')):
+        return 'rate_limit'
+    if any(word in text for word in ('certificate', 'ssl:', 'tls')):
+        return 'tls'
+    if any(word in text for word in ('403', 'forbidden', 'private', 'sign in', 'not a bot', 'unavailable', 'members-only')):
+        return 'access'
+    if any(word in text for word in ('disk', 'space', 'no space', 'boş alan', 'permission', 'access is denied', 'read-only')):
+        return 'disk'
+    if any(word in text for word in ('ffmpeg', 'postprocess', 'mp3 tags')):
+        return 'processing_failed'
+    return 'network'
 
 
 def search_text(value):
@@ -126,6 +145,7 @@ def get_entries(job, logger):
     entries, seen = [], set()
     channel_title, skipped_live = '', 0
     with yt_dlp.YoutubeDL({'extract_flat': 'in_playlist', 'skip_download': True, 'noplaylist': source_type != 'playlist',
+                          'cachedir': str(APP_DIR / 'veri' / 'cache'),
                           'logger': logger, 'socket_timeout': 25, 'js_runtimes': node_runtime_options(APP_DIR)}) as ydl:
         urls = [base] if source_type != 'channel' else [base + '/' + tab for tab in (['videos', 'shorts', 'streams'] if job['all_tabs'] else ['videos'])]
         for url in urls:
@@ -155,32 +175,36 @@ def get_entries(job, logger):
 def make_options(job, folder, logger, hooks):
     import imageio_ffmpeg
     options = {
-        'ffmpeg_location': imageio_ffmpeg.get_ffmpeg_exe(),
+        'ffmpeg_location': ffmpeg_path(),
         'js_runtimes': node_runtime_options(APP_DIR),
+        'cachedir': str(APP_DIR / 'veri' / 'cache'),
         'outtmpl': str(folder / '%(title).180B.%(ext)s'),
         'windowsfilenames': True,
         'download_archive': str(metadata_paths(folder, job)['archive']),
         'continuedl': True, 'overwrites': False,
-        'retries': 8, 'fragment_retries': 8, 'extractor_retries': 3,
+        'retries': 3, 'fragment_retries': 3, 'extractor_retries': 2,
         'retry_sleep_functions': {'http': lambda n: min(2 ** n, 20), 'fragment': lambda n: min(2 ** n, 20)},
         'skip_unavailable_fragments': False,
-        'concurrent_fragment_downloads': 8 if job.get('speed', SPEED_MODES[0]) == SPEED_MODES[0] else (4 if job.get('speed') == SPEED_MODES[1] else 1),
+        'concurrent_fragment_downloads': connection_count(job),
+        'tekniva_transfer': job.get('speed', SPEED_MODES[0]),
+        'http_chunk_size': 8 * 1024**2,
         'socket_timeout': 25,
         'noplaylist': True,
-        'sleep_interval': 5, 'max_sleep_interval': 10, 'sleep_interval_requests': 0.5,
+        'sleep_interval': 0, 'max_sleep_interval': 0, 'sleep_interval_requests': 0.5,
+        'postprocessor_args': {name + '+ffmpeg_o': ['-movflags', '0', '-nostats', '-stats_period', '0.5',
+                                                   '-progress', str(metadata_paths(folder, job)['root'] / 'ffmpeg-progress.txt')]
+                               for name in ('merger', 'videoremuxer', 'extractaudio', 'fixupm3u8', 'fixupm4a',
+                                            'fixupstretched', 'fixuptimestamp', 'fixupduration')},
         'noprogress': True, 'logger': logger,
         'progress_hooks': [hooks['progress']],
         'postprocessor_hooks': [hooks['postprocess']],
     }
     if job['format'] == 'MP3':
         cover_folder = metadata_paths(folder, job)['root'] / 'kapaklar'
-        options.update(format='bestaudio/best', writethumbnail=True,
+        options.update(format='bestaudio/best', writethumbnail=True, tekniva_mp3=True,
                        outtmpl={'default': options['outtmpl'], 'thumbnail': str(cover_folder / '%(id)s.%(ext)s')},
                        postprocessors=[
-                           {'key': 'FFmpegThumbnailsConvertor', 'format': 'jpg', 'when': 'before_dl'},
                            {'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': job['quality'].split()[0]},
-                           {'key': 'FFmpegMetadata', 'add_metadata': True, 'add_chapters': False, 'add_infojson': False},
-                           {'key': 'EmbedThumbnail', 'already_have_thumbnail': False},
                        ])
     else:
         cap = re.match(r'(\d+)p', job['quality'])
@@ -195,7 +219,7 @@ def make_options(job, folder, logger, hooks):
 def retryable_error(error):
     text = str(error).casefold()
     return any(fragment in text for fragment in ('403', 'forbidden', '429', 'too many requests', 'timed out', 'timeout',
-                                                  'connection reset', '500', '502', '503', '504', 'aria2c exited', 'try again later'))
+                                                  'connection reset', 'connection refused', 'certificate', '500', '502', '503', '504', 'aria2c exited', 'try again later'))
 
 
 def download_with_recovery(url, options, emit, sleep=time.sleep):
@@ -206,7 +230,7 @@ def download_with_recovery(url, options, emit, sleep=time.sleep):
         current = dict(options)
         stop_monitor = threading.Event()
         monitor = None
-        if attempt < 2 and current.get('concurrent_fragment_downloads', 1) > 1 and aria2_path():
+        if attempt == 0 and current.get('tekniva_transfer') == 'Hızlı (8 bağlantı)' and aria2_path():
             with socket.socket() as sock:
                 sock.bind(('127.0.0.1', 0))
                 port = sock.getsockname()[1]
@@ -216,6 +240,9 @@ def download_with_recovery(url, options, emit, sleep=time.sleep):
             current['external_downloader_args'] = {'aria2c': [f'-x{connections}', f'-s{connections}', '-j1', '-k1M',
                 '--max-tries=3', '--retry-wait=2', '--connect-timeout=15', '--timeout=30', '--enable-rpc=true',
                 '--rpc-listen-all=false', f'--rpc-listen-port={port}', f'--rpc-secret={token}']}
+            if os.name != 'nt':
+                import certifi
+                current['external_downloader_args']['aria2c'].append('--ca-certificate=' + certifi.where())
 
             def rpc_progress():
                 opener = build_opener(ProxyHandler({}))
@@ -234,11 +261,13 @@ def download_with_recovery(url, options, emit, sleep=time.sleep):
                         if total:
                             emit('progress', percent=min(100, complete / total * 100), speed=speed,
                                  eta=(total - complete) / speed if speed else None, stage='downloading')
-                        elif not tasks and rpc('aria2.tellStopped', [0, 1, ['status']]):
-                            session = rpc('aria2.getSessionInfo', []).get('sessionId')
-                            if session != shutdown_session:
-                                rpc('aria2.shutdown', [])
-                                shutdown_session = session
+                        elif not tasks:
+                            stopped = rpc('aria2.tellStopped', [0, 1, ['status']])
+                            if stopped and stopped[0].get('status') == 'complete' and not rpc('aria2.tellWaiting', [0, 1, ['status']]):
+                                session = rpc('aria2.getSessionInfo', []).get('sessionId')
+                                if session != shutdown_session:
+                                    rpc('aria2.forceShutdown', [])
+                                    shutdown_session = session
                     except Exception:
                         pass
             monitor = threading.Thread(target=rpc_progress, daemon=True)
@@ -255,6 +284,9 @@ def download_with_recovery(url, options, emit, sleep=time.sleep):
             current['concurrent_fragment_downloads'] = min(4, current.get('concurrent_fragment_downloads', 1))
         try:
             with yt_dlp.YoutubeDL(current) as downloader:
+                if current.get('tekniva_mp3'):
+                    from media_processing import FastMP3TagsPP
+                    downloader.add_post_processor(FastMP3TagsPP(downloader))
                 info = downloader.extract_info(url, download=False)
                 if not info:
                     raise yt_dlp.utils.DownloadError('Video bilgisi alınamadı.')
@@ -267,6 +299,8 @@ def download_with_recovery(url, options, emit, sleep=time.sleep):
         except yt_dlp.utils.DownloadError as error:
             if attempt == 2 or not retryable_error(error):
                 raise
+            if error_code(error) == 'tls':
+                options['prefer_system_certs'] = True
             limited = any(term in str(error).casefold() for term in ('429', 'too many requests', 'try again later'))
             delay = (30 if attempt == 0 else 90) if limited else (5 if attempt == 0 else 10)
             emit('status', text=f'Geçici bağlantı hatası. {delay} sn sonra yeniden deneniyor ({attempt + 2}/3)…')
@@ -399,6 +433,8 @@ def run_worker(job_path):
             self.write('ERROR: ' + message)
 
     logger = Logger()
+    processor = None
+    queue_downloads = 0
     try:
         emit('status', text='Video listesi alınıyor…' if job['action'] == 'list' else 'Seçilen videolar hazırlanıyor…')
         entries, channel_title, skipped_live = get_entries(job, logger)
@@ -423,14 +459,11 @@ def run_worker(job_path):
             emit('progress', percent=min(100, event.get('downloaded_bytes', 0) / total * 100) if total else 0,
                  speed=event.get('speed'), eta=event.get('eta'), stage=event['status'])
 
-        def postprocess(event):
-            cover = job['format'] == 'MP3' and event.get('postprocessor') in ('EmbedThumbnail', 'ThumbnailsConvertor')
-            emit('status', text='Kapak görseli ekleniyor…' if cover else 'Ses hazırlanıyor…' if job['format'] == 'MP3' else 'Görüntü ve ses MP4 olarak birleştiriliyor…', code='cover' if cover else 'processing')
-
         for index, entry in enumerate(entries, 1):
             if job.get('artist_subfolders') and not entry.get('artist'):
                 # Flat channel/playlist listings may omit music metadata.
                 with yt_dlp.YoutubeDL({'skip_download': True, 'noplaylist': True, 'logger': logger,
+                                      'cachedir': str(APP_DIR / 'veri' / 'cache'),
                                       'socket_timeout': 25, 'js_runtimes': node_runtime_options(APP_DIR)}) as resolver:
                     try:
                         details = resolver.extract_info(entry['url'], download=False) or {}
@@ -442,7 +475,9 @@ def run_worker(job_path):
             folder.mkdir(parents=True, exist_ok=True)
             paths = metadata_paths(folder, job)
             paths['list'].write_text(json.dumps(entries, ensure_ascii=False, indent=2), encoding='utf-8')
-            options = make_options(job, folder, logger, {'progress': progress, 'postprocess': postprocess})
+            from media_processing import ProcessingProgress
+            processor = ProcessingProgress(paths['root'] / 'ffmpeg-progress.txt', emit)
+            options = make_options(job, folder, logger, {'progress': progress, 'postprocess': processor.hook})
             archive = paths['archive']
             archived_ids = {line.split()[-1] for line in archive.read_text(encoding='utf-8').splitlines() if line.strip()} if archive.exists() else set()
             names_file = paths['names']
@@ -453,6 +488,11 @@ def run_worker(job_path):
                 emit('item', id=entry['id'], state='Zaten indirildi')
             else:
                 try:
+                    if queue_downloads:
+                        pause = 2 if job.get('speed') == 'Hızlı (8 bağlantı)' else 8 if job.get('speed') == 'Uyumlu (1 bağlantı)' else 5
+                        emit('status', text=f'Kuyruk devam ediyor; {pause} sn bekleniyor…', code='queue_pause')
+                        time.sleep(pause)
+                    queue_downloads += 1
                     if entry['id'] in archived_ids:
                         forget_archived_id(archive, entry['id'])
                     if shutil.disk_usage(folder).free < 3 * 1024**3:
@@ -465,14 +505,18 @@ def run_worker(job_path):
                     template = str(folder / (stem.replace('%', '%%') + '.%(ext)s'))
                     entry_template = {**options['outtmpl'], 'default': template} if isinstance(options['outtmpl'], dict) else template
                     entry_options = {**options, 'outtmpl': entry_template}
+                    started = time.monotonic()
                     result = download_with_recovery(entry['url'], entry_options, emit)
+                    logger.debug(f'Completed media pipeline in {time.monotonic() - started:.2f} seconds')
                     if not result:
                         raise yt_dlp.utils.DownloadError('Video indirilemedi; ayrıntılar kayıt dosyasında.')
                     completed += 1
                     emit('item', id=entry['id'], state='Tamamlandı')
-                except yt_dlp.utils.DownloadError as error:
+                except (yt_dlp.utils.DownloadError, OSError) as error:
                     failed += 1
-                    emit('item', id=entry['id'], state='Hata', error=str(error))
+                    emit('item', id=entry['id'], state='Hata', error=str(error), error_code=error_code(error))
+                finally:
+                    processor.close()
             emit('overall', processed=index, total=len(entries), completed=completed, skipped=skipped, failed=failed)
         report = {'completed': completed, 'skipped': skipped, 'failed': failed, 'total': len(entries)}
         for target in {output_folder(job, entry, channel_title) for entry in entries}:
@@ -481,8 +525,11 @@ def run_worker(job_path):
         return 0 if not failed else 1
     except BaseException as error:
         logger.error(str(error))
-        emit('fatal', text=str(error))
+        emit('fatal', text=str(error), error_code=error_code(error))
         return 1
+    finally:
+        if processor:
+            processor.close()
 
 
 def run_gui(test_callback=None):
@@ -493,6 +540,9 @@ def run_gui(test_callback=None):
 if __name__ == '__main__':
     if len(sys.argv) >= 3 and sys.argv[1] == '--worker':
         sys.exit(run_worker(sys.argv[2]))
+    elif len(sys.argv) >= 3 and sys.argv[1] == '--verify-media':
+        from release_checks import verify_media
+        sys.exit(0 if verify_media(sys.argv[2]) else 1)
     elif len(sys.argv) >= 3 and sys.argv[1] == '--install-node':
         try:
             installed = install_node(APP_DIR)
@@ -505,11 +555,15 @@ if __name__ == '__main__':
         import imageio_ffmpeg
         import yt_dlp
         import yt_dlp_ejs
-        ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+        import yt_dlp_ejs.yt.solver
+        import certifi
+        ffmpeg = ffmpeg_path()
         check = subprocess.run([ffmpeg, '-version'], capture_output=True, creationflags=NO_WINDOW)
         runtime = node_path(APP_DIR)
         Path(sys.argv[2]).write_text(json.dumps({'ffmpeg': check.returncode == 0, 'node': bool(runtime), 'node_path': runtime,
                                                 'aria2': bool(aria2_path()), 'yt_dlp': yt_dlp.version.__version__,
+                                                'ejs_ready': bool(yt_dlp_ejs.yt.solver.core() and yt_dlp_ejs.yt.solver.lib()),
+                                                'tls_bundle': Path(certifi.where()).is_file(),
                                                 'ejs': str(yt_dlp_ejs.__file__)}, indent=2), encoding='utf-8')
     else:
         run_gui()

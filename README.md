@@ -1,17 +1,17 @@
 # Tekniva YT Downloader
 
-[![Version](https://img.shields.io/badge/version-beta%200.1.6-blue)](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases)
+[![Version](https://img.shields.io/badge/version-beta%200.1.7-blue)](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases)
 [![Windows](https://img.shields.io/badge/platform-Windows%20x64-0078D4)](#kurulum)
 [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-green)](LICENSE)
 [![Tests](https://github.com/Tekniva-AI/tekniva-yt-downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/Tekniva-AI/tekniva-yt-downloader/actions/workflows/ci.yml)
 
 YouTube ve YouTube Music bağlantılarından seçtiğiniz videoları **MP4**, şarkıları **kapak resmi içeren MP3** olarak indiren, yedi dil destekli açık kaynak Windows masaüstü uygulaması.
 
-**[Windows için indir →](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.6-beta)** · [Değişiklikler](CHANGELOG.md) · [Katkıda bulun](CONTRIBUTING.md) · [Topluluk](https://github.com/Tekniva-AI/tekniva-yt-downloader/discussions) · [Instagram](https://www.instagram.com/tekniva.com.tr/)
+**[Windows için indir →](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.7-beta)** · [Değişiklikler](CHANGELOG.md) · [Katkıda bulun](CONTRIBUTING.md) · [Topluluk](https://github.com/Tekniva-AI/tekniva-yt-downloader/discussions) · [Instagram](https://www.instagram.com/tekniva.com.tr/)
 
 ## Ekran görüntüleri
 
-Görseller beta 0.1.4 arayüzünü gösterir; beta 0.1.6 ek olarak uygulama içinden bileşen kurulumu sunar. Listelerdeki içerikler tanıtım için hazırlanmış örneklerdir.
+Görseller beta 0.1.4 arayüzünü gösterir; beta 0.1.7 ek olarak uygulama içinden bileşen kurulumu sunar. Listelerdeki içerikler tanıtım için hazırlanmış örneklerdir.
 
 ### Koyu görünüm
 
@@ -32,8 +32,8 @@ Görseller beta 0.1.4 arayüzünü gösterir; beta 0.1.6 ek olarak uygulama içi
 - Türkçe karakterlere duyarlı arama; başlık, süre, seçim ve duruma göre sıralama.
 - MP4 için mevcut en yüksek kalite veya 2160p, 1440p, 1080p, 720p, 480p, 360p sınırı.
 - MP3 için 128, 192 ve 320 kbps seçenekleri; JPEG ön kapak ve ID3v2.3 etiketleri.
-- Yüzdelik indirme durumu, aktarım ve toplam kuyruk ilerlemesi; durdurma ve hata kayıtları.
-- Uygun bağlantılarda aria2 ile 8/4/1 bağlantı; geçici hatalarda sınırlı yeniden deneme.
+- Yüzdelik indirme ve FFmpeg hazırlama ilerlemesi; geçen süre, durdurma ve açıklayıcı hata kayıtları.
+- Önerilen Otomatik modda yerleşik aktarım, 8 MiB HTTP parçaları ve dört parçalı akış bağlantısı; Hızlı modda aria2 ve hata halinde yerleşik aktarım.
 - Sadece içerik başlığından oluşan dosya adları. Aynı başlıkta farklı içeriklere çakışmayan adlar atanır.
 - Varsayılan olarak doğrudan seçilen klasöre kayıt. İsteğe bağlı kanal, sanatçı ve oynatma listesi alt klasörleri.
 - Silinen veya boş kalan dosyayı yeniden indirme. Yardımcı kayıtlar indirme klasörüne yazılmaz.
@@ -41,7 +41,7 @@ Görseller beta 0.1.4 arayüzünü gösterir; beta 0.1.6 ek olarak uygulama içi
 
 ## Kurulum
 
-1. [Release sayfasından](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.6-beta) `Tekniva-YT-Downloader-0.1.6-Windows-x64.zip` dosyasını indirin.
+1. [Release sayfasından](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.7-beta) `Tekniva-YT-Downloader-0.1.7-Windows-x64.zip` dosyasını indirin.
 2. ZIP'i yazma izniniz olan bir klasöre çıkarın. Uygulamayı ZIP'in içinden çalıştırmayın.
 3. Node.js eksik veya eskiyse ilk listeleme/indirme işleminde uygulama kurulum onayı ister. **Evet** seçildiğinde resmi Node.js bileşeni otomatik indirilir, doğrulanır ve uygulama klasörüne eklenir. İşlem daha sonra kendiliğinden devam eder.
 4. `Tekniva YT Downloader.exe` dosyasını açın. Python, FFmpeg ve aria2 pakete dahildir. Tek EXE indirdiyseniz onu da yazılabilir bir klasöre koyup açın; aynı otomatik bileşen kurulumu çalışır.
@@ -55,7 +55,7 @@ Release içinde taşınabilir ZIP, ayrı EXE ve `SHA256SUMS.txt` bulunur. Kaynak
 İndirilen dosyanın bütünlüğünü kontrol etmek için PowerShell'de:
 
 ```powershell
-Get-FileHash .\Tekniva-YT-Downloader-0.1.6-Windows-x64.zip -Algorithm SHA256
+Get-FileHash .\Tekniva-YT-Downloader-0.1.7-Windows-x64.zip -Algorithm SHA256
 ```
 
 Çıkan değeri release içindeki `SHA256SUMS.txt` ile karşılaştırın.
@@ -91,14 +91,22 @@ Uygulama klasöründeki `ayarlar.json`, `kuyruk.json`, `veri/` ve `islem-kayitla
 
 MP3 320 kbps seçimi kaynak ses kalitesini artırmaz; daha düşük kaliteli kaynağı 320 kbps olarak dönüştürür. MP4'te Opus ses bit hızı değişken olabilir ve oynatıcı 122–128 kbps gösterebilir. Bu sayı tek başına uygulamanın sesi düşürdüğünü göstermez.
 
-8 bağlantılı aktarım modu uygun HTTP akışlarında paralel bağlantı kullanır. Hız; bağlantınız, YouTube/CDN, içerik biçimi ve dönüştürme süresine bağlıdır. HLS gibi parçalı akışlarda farklı aktarım yolu kullanılır. Sınırsız hız veya YouTube kısıtlamalarını aşma garantisi verilmez. Geçici 403/429 hatalarında sınırlı bekleme ve yeniden deneme uygulanır; özel, silinmiş, bölgeye kapalı veya erişim gerektiren içerikler indirilemeyebilir.
+**Otomatik (önerilen)** temiz bilgisayarlarda varsayılandır: yerleşik indirici, 8 MiB HTTP parçaları ve parçalı akışlarda dört bağlantı kullanır. Bu mod ayrı aria2 RPC bağlantısı gerektirmez. **Hızlı** mod uygun HTTP akışlarında aria2 ile sekiz bağlantı kullanır; hata alınırsa yeni URL ile yerleşik indirici denenir, gerektiğinde aynı video kalitesini koruyan HLS akışı aranır. Eski ayarlarınız Hızlı modda kalmışsa sorun yaşadığınızda Otomatik'i seçin. Dengeli dört, Uyumlu tek parçalı akış bağlantısı kullanır.
+
+Her görüntü/ses akışı öncesindeki 5–10 saniyelik beklemeler kaldırıldı. Toplu indirmede içerikler arasında Otomatik/Dengeli modda 5, Hızlı modda 2, Uyumlu modda 8 saniyelik kısa aralık bırakılır. Servis sınırı bildirilirse ayrıca 30/90 saniyelik sınırlı geri çekilme uygulanır.
+
+MP4 birleştirme yeniden kodlama yapmaz. Yerel oynatma için gerekmeyen `faststart` ikinci dosya geçişi kaldırıldı; internet üzerinden aşamalı oynatma için `faststart` isteyen kullanımda sonradan düzenleme gerekebilir. MP3 gerekli ses kodlamasını bir kez yapar; başlık, sanatçı ve JPEG kapak Mutagen ile eklenir. Önceki MP3 hazırlama yolu üç FFmpeg ses dosyası geçişi kullanıyordu; yeni yol tek geçiş kullanır. Kapak en fazla 600 piksel boyutunda, RGB JPEG ve ID3v2.3 ön kapak olarak saklanır. Hazırlama yüzdesi FFmpeg'in gerçek süre bilgisinden alınır; süre bilinmiyorsa geçen süre gösterilir.
+
+YouTube desteği [resmi 2026.10.10 nightly derlemesine](https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/tag/2026.10.10.233141) sabitlendi. Bu beta, güncel YouTube istemci düzeltmeleri için kararlı 2026.08.19 yerine test edilmiş nightly sürümü kullanır. Certifi sertifika verisi pakete dahildir; TLS doğrulaması kapatılmaz. Node.js kurulumu sistemin güven deposu ile paket sertifikalarını birlikte kullanır. Başarısız TLS aktarımında sistem sertifikalarıyla doğrulanan sınırlı yeniden deneme yapılabilir.
+
+Hız bağlantınıza, YouTube/CDN'e, işlemcinize ve diskinize bağlıdır. Sınırsız hız veya erişim kısıtlarını aşma garantisi verilmez. Özel, silinmiş, bölgeye kapalı veya erişim gerektiren içerikler indirilemeyebilir. Hata açıklaması bağlantı, erişim, istek sınırı, sertifika, disk veya hazırlama nedenini gösterir ve kuyruk sonunda korunur.
 
 ## Sık karşılaşılan sorunlar
 
 | Sorun | Kontrol |
 |---|---|
 | Liste boş görünüyor | Aramayı temizleyin, bağlantının desteklenen bir YouTube adresi olduğunu kontrol edin ve işlem kaydını açın. |
-| HTTP 403 / 429 | Bir süre bekleyin, uygulamanın yeni sürümünü kontrol edin ve daha az bağlantılı modu deneyin. Kaydı kişisel bilgileri temizleyerek hata bildirimine ekleyin. |
+| HTTP 403 / 429 | Bir süre bekleyin, uygulamanın yeni sürümünü kontrol edin ve Otomatik modu deneyin. Kaydı kişisel bilgileri temizleyerek hata bildirimine ekleyin. |
 | Node.js hazırlanamadı | İnternet bağlantısını ve uygulama klasörüne yazma iznini kontrol edip tekrar deneyin. Uygulamayı ZIP içinden açmak yerine çıkarın. |
 | MP3 kapağı oynatıcıda görünmüyor | Dosyada gömülü kapak olsa bile oynatıcı eski bilgiyi önbelleğe almış olabilir. Yeni dosya adıyla bir kopyada kontrol edin. Kaynağın küçük resim sağlaması gerekir. |
 | Daha önce indirilen dosya silindi | Aynı biçim/kaliteyle tekrar indirin; uygulama dosyanın gerçekten mevcut ve dolu olduğunu kontrol eder. |
@@ -124,6 +132,7 @@ py -3.13 -m venv .venv
 ```powershell
 .\.venv\Scripts\python.exe program/test_program.py
 .\.venv\Scripts\python.exe program/test_dependencies.py
+.\.venv\Scripts\python.exe -m unittest discover -s program -p test_performance.py -v
 .\.venv\Scripts\python.exe program/verify_theme.py
 .\.venv\Scripts\python.exe program/build_release.py --rebuild
 .\.venv\Scripts\python.exe program/package_release.py
@@ -131,9 +140,9 @@ py -3.13 -m venv .venv
 
 Temel testler yerel HTTP sunucusu ve sentetik medya kullanır; YouTube'dan gerçek şarkı indirmez. Tema doğrulaması görünür test pencereleri açar. `--rebuild` mevcut sürümü tekrar paketler; seçenek verilmezse patch sürümü artar. Sürümün tek kaynağı `program/translations.py` içindeki `VERSION` değeridir. Sürüm yayımlarken changelog ve README bağlantılarını da güncelleyin.
 
-Tag `v0.1.6-beta` biçimindedir. `release.yml` sürümü tag ile karşılaştırır, testleri çalıştırır ve temiz Windows ZIP/EXE/checksum dosyalarını **taslak release** olarak oluşturur. Maintainer test edip taslağı yayımlar. CI `main` push ve pull request'lerinde testleri çalıştırır.
+Tag `v0.1.7-beta` biçimindedir. `release.yml` sürümü tag ile karşılaştırır, testleri çalıştırır ve temiz Windows ZIP/EXE/checksum dosyalarını **taslak release** olarak oluşturur. Maintainer test edip taslağı yayımlar. CI `main` push ve pull request'lerinde testleri çalıştırır.
 
-Gerçek dağıtım doğrulaması için paketlemeden sonra `python program/test_portable_release.py` çalıştırın. Bu isteğe bağlı test internetten resmi Node.js'i indirir; sistem Node.js'i görünmez yapan izole klasörlerde hem EXE hem ZIP ilk kurulumu ve sonraki açılışı denetler. Release iş akışı bu kontrolü otomatik çalıştırır.
+Gerçek dağıtım doğrulaması için paketlemeden sonra `python program/test_portable_release.py` çalıştırın. Bu isteğe bağlı test internetten resmi Node.js'i indirir; sistem Node.js/FFmpeg'i görünmez yapan izole klasörlerde EXE ve ZIP kurulumunu, EJS/sertifika kaynaklarını, yerel HTTP indirmesini ve gerçek kapaklı MP3/MP4 hazırlamasını denetler. Ses testi üretilmiş kısa bir örnekte yeni tek geçişi eski üç geçişli MP3 yolu ile karşılaştırır; sonuç tüm cihazlarda aynı hız artışını garanti etmez. Release iş akışı bu kontrolü otomatik çalıştırır.
 
 ## Proje yapısı
 

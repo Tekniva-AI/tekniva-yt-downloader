@@ -23,4 +23,5 @@ jobs:
       - run: python program/bootstrap_tools.py
       - run: python program/test_program.py
       - run: python program/test_dependencies.py
+      - run: python -m unittest discover -s program -p test_performance.py -v
       - run: python -m compileall -q program

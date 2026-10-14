@@ -2,6 +2,27 @@
 
 Yayımlanan kullanıcı güncellemelerinde sürüm numarası artırılır. Beta sürümleri GitHub'da prerelease olarak işaretlenir.
 
+## [0.1.7-beta](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.7-beta) — 2026-10-14
+
+### Düzeltildi ve hızlandırıldı
+
+- YouTube bağlantı bileşeni resmi 2026.10.10 nightly sürümüne sabitlendi; eşleşen EJS kaynakları korunur.
+- Temiz bilgisayarlarda Otomatik mod varsayılan oldu: yerleşik HTTP aktarımı, 8 MiB parçalar ve dört akış bağlantısı.
+- Hızlı mod hatasında aynı harici aktarımı tekrar tekrar denemek yerine yerleşik indiriciye geçilir; son alternatifte video kalitesi korunur.
+- Akış başına 5–10 saniye bekleme kaldırıldı; toplu istek aralığı ve servis sınırında sınırlı bekleme korunur.
+- MP4'te yeniden kodlama yapılmadan ek faststart dosya geçişi kaldırıldı.
+- MP3 etiket ve kapakları Mutagen/Pillow ile yazılır; üç FFmpeg ses geçişi yerine tek kodlama geçişi.
+- RGB JPEG kapak en fazla 600 piksel, ön kapak ve ID3v2.3 olarak korunur.
+- Paket FFmpeg'i eski sistem ortam değişkenlerinden önce seçilir. Sertifika verileri pakete dahil edilir; TLS doğrulaması korunur.
+- Node.js sürüm kontrolü dosya değişmedikçe aynı süreçte tekrar çalıştırılmaz.
+
+### Eklendi
+
+- Gerçek FFmpeg hazırlama yüzdesi ve geçen süre; uzun işlemlerde artan kayıt dosyası parça parça okunur.
+- Erişim, istek sınırı, TLS, bağlantı, disk ve hazırlama hataları için yedi dilde açıklama; kuyruk sonunda hata bilgisi korunur.
+- EXE/ZIP için sistem Node/FFmpeg'i olmadan yerel HTTP, MP4, kapaklı MP3 ve eski/yeni geçiş sayısı doğrulaması.
+- Gerçek YouTube/YouTube Music örneğinde yerel MP4 ve MP3 indirme doğrulandı; diğer bilgisayardaki özgül hata kaydına erişilemedi.
+
 ## [0.1.6-beta](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.6-beta) — 2026-10-09
 
 ### Düzeltildi

@@ -28,6 +28,7 @@ def run_gui(test_callback=None):
             self.install_events = queue.SimpleQueue()
             self.install_cancel = threading.Event()
             self.install_dialog = None
+            self.last_error_hint = None
             self.event_offset = 0
             self.event_buffer = ''
             self.got_final = self.stopping = False
@@ -248,7 +249,7 @@ def run_gui(test_callback=None):
             self.format_changed()
             self.scope_box.configure(values=[self.t('videos'), self.t('all_tabs')])
             self.scope_box.current(0 if self.scope.get() == 'Yalnızca Videolar sekmesi' else 1)
-            self.speed_box.configure(values=[self.t(k) for k in ('fast', 'balanced', 'compatible')])
+            self.speed_box.configure(values=[self.t(k) for k in ('automatic', 'fast', 'balanced', 'compatible')])
             self.speed_box.current(SPEED_MODES.index(self.speed_mode.get()) if self.speed_mode.get() in SPEED_MODES else 0)
             for video_id in self.entries:
                 self.render_state(video_id)
@@ -709,6 +710,7 @@ def run_gui(test_callback=None):
             self.event_offset = 0
             self.event_buffer = ''
             self.got_final = self.stopping = False
+            self.last_error_hint = None
             self.current_id = None
             if self.action == 'list':
                 # Clear stale search immediately; old queue survives failed extraction.
@@ -729,7 +731,7 @@ def run_gui(test_callback=None):
         def render_state(self, video_id):
             if self.table.exists(video_id):
                 state, percent = self.states.get(video_id, ('waiting', 0))
-                self.table.set(video_id, 'state', self.t(state, percent=f'{percent:.0f}'))
+                self.table.set(video_id, 'state', self.t('processing_percent' if state == 'processing' and percent else state, percent=f'{percent:.0f}'))
                 if state == 'failed':
                     self.table.item(video_id, tags=('error',))
                 else:
@@ -773,6 +775,8 @@ def run_gui(test_callback=None):
                 if event.get('code') == 'cover':
                     self.status.set(self.t('cover'))
                     self.set_state(self.current_id, 'processing')
+                elif event.get('code') == 'queue_pause':
+                    self.status.set(self.t('queue_pause'))
                 elif 'birleştir' in text or 'Ses hazırlan' in text:
                     self.status.set(self.t('processing'))
                     self.set_state(self.current_id, 'processing')
@@ -791,6 +795,13 @@ def run_gui(test_callback=None):
                 self.set_state(self.current_id, 'preparing')
                 if self.current_id in self.visible_ids:
                     self.table.see(self.current_id)
+            elif kind == 'processing':
+                percent = event.get('percent')
+                self.current_bar['value'] = percent or 0
+                self.set_state(self.current_id, 'processing', percent or 0)
+                self.status.set(self.t('cover') if event.get('phase') == 'cover' else self.t('processing'))
+                self.detail.set(self.t('processing_progress', percent=f'{percent:.0f}', seconds=int(event.get('elapsed') or 0))
+                                if percent is not None else self.t('processing_elapsed', seconds=int(event.get('elapsed') or 0)))
             elif kind == 'progress':
                 percent = event['percent']
                 self.current_bar['value'] = percent
@@ -802,14 +813,15 @@ def run_gui(test_callback=None):
                 state = {'Tamamlandı': 'completed', 'Zaten indirildi': 'skipped', 'Hata': 'failed'}[event['state']]
                 self.set_state(event['id'], state, 100 if state in ('completed', 'skipped') else 0)
                 if event.get('error'):
-                    self.detail.set(self.t('details_log'))
+                    self.last_error_hint = self.t('error_' + event.get('error_code', 'network'))
+                    self.detail.set(self.last_error_hint)
             elif kind == 'overall':
                 self.overall_bar['value'] = event['processed'] / event['total'] * 100 if event['total'] else 0
                 self.count.set(self.t('overall', **{k: event[k] for k in ('processed', 'total', 'completed', 'skipped', 'failed')}))
             elif kind in ('done', 'fatal'):
                 self.got_final = True
-                self.status.set(self.t('loaded', n=len(self.entries)) if kind == 'done' and self.action == 'list' else self.t('done') if kind == 'done' else self.t('error'))
-                self.detail.set(self.t('instructions') if kind == 'done' else self.t('details_log'))
+                self.status.set(self.t('loaded', n=len(self.entries)) if kind == 'done' and self.action == 'list' else self.t('done_with_errors', n=event['failed']) if kind == 'done' and event.get('failed') else self.t('done') if kind == 'done' else self.t('error'))
+                self.detail.set(self.last_error_hint or self.t('instructions') if kind == 'done' else self.t('error_' + event.get('error_code', 'network')))
                 if kind == 'done' and self.action == 'download':
                     self.current_id = None
                 self.save_queue()

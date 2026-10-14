@@ -6,15 +6,17 @@ Tekniva YT Downloader source: Copyright © 2026 Tekniva, GPL-3.0-or-later. Bundl
 |---|---|---|---|
 | Python | Build host 3.13 | PSF and included notices | https://www.python.org/downloads/source/ |
 | Tcl/Tk | Python Windows runtime | Tcl/Tk BSD-style terms | https://www.tcl-lang.org/software/tcltk/download.html |
-| yt-dlp | 2026.8.19 | Unlicense | https://github.com/yt-dlp/yt-dlp/tree/2026.08.19 |
+| yt-dlp | nightly 2026.10.10.233141.dev0 | Unlicense | https://github.com/yt-dlp/yt-dlp/tree/897341241f2bfb2439fe0367f4c7c9ccd29a3828 |
 | yt-dlp-ejs | 0.8.0 | Unlicense, MIT, ISC | https://github.com/yt-dlp/ejs/tree/0.8.0 |
 | imageio-ffmpeg Python wrapper | 0.6.0 | BSD-2-Clause | https://github.com/imageio/imageio-ffmpeg/tree/v0.6.0 |
 | FFmpeg executable | 7.1 essentials, gyan.dev | GPL-3.0-or-later (GPL/version3 build) | https://www.gyan.dev/ffmpeg/builds/ ; https://github.com/FFmpeg/FFmpeg/tree/n7.1 |
 | aria2 executable | 1.37.0 win-64bit-build1 | GPL-2.0-or-later; included OpenSSL notices | https://github.com/aria2/aria2/releases/tag/release-1.37.0 |
 | Mutagen | 1.48.1 | GPL-2.0-or-later | https://github.com/quodlibet/mutagen |
+| Pillow | 12.1.1 | MIT-CMU and included third-party notices | https://github.com/python-pillow/Pillow |
+| Certifi certificate bundle | 2026.7.22 | MPL-2.0 | https://github.com/certifi/python-certifi |
 | PyInstaller bootloader | 6.22.3 | GPL-2.0-or-later with bootloader exception | https://github.com/pyinstaller/pyinstaller |
 
-Runtime license texts are supplied in `licenses/`. The full GPLv3 text is also in the top-level `LICENSE`. Python package notices can be reproduced from the pinned distributions using `program/collect_licenses.py`. Development dependencies (including Pillow) are specified in `requirements-dev.txt`; they retain their respective licenses.
+Runtime license texts are supplied in `licenses/`. The full GPLv3 text is also in the top-level `LICENSE`. Python package notices can be reproduced from the pinned distributions using `program/collect_licenses.py`. Runtime dependencies are pinned in `requirements.txt`; development dependencies are specified in `requirements-dev.txt`. They retain their respective licenses.
 
 ## Binary provenance and source access
 

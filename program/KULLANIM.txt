@@ -1,4 +1,14 @@
-TEKNIVA YT DOWNLOADER — beta 0.1.6
+TEKNIVA YT DOWNLOADER — beta 0.1.7
+
+YENİ ÖZELLİKLER — beta 0.1.7
+Temiz kurulumda önerilen aktarım modu Otomatik'tir. Sorun yaşayan mevcut
+kullanıcılar da aktarım menüsünden Otomatik'i seçebilir.
+YouTube bağlantı bileşeni güncellendi; Hızlı mod hatasında yerleşik aktarım denenir.
+Her akış öncesindeki bekleme kaldırıldı; toplu içerikler arasındaki kısa aralık korunur.
+MP4 ek dosya geçişi yapmadan birleştirilir. MP3 tek kodlama geçişi kullanır;
+sanatçı/başlık ve 600 piksele kadar JPEG ön kapak doğrudan etiketlere eklenir.
+Hazırlama sırasında gerçek yüzde veya geçen süre gösterilir.
+Hata nedeni açıklaması kuyruk sonunda kaybolmaz. Ayrıntılar İşlem kaydı'ndadır.
 
 YENİ ÖZELLİKLER — beta 0.1.5
 Node.js eksik veya eskiyse program kurulum onayı sorar. Evet seçildiğinde

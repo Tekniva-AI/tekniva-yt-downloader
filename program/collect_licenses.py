@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 PACKAGES = ('yt-dlp', 'yt-dlp-ejs', 'imageio-ffmpeg', 'mutagen', 'pyinstaller',
             'altgraph', 'packaging', 'pefile', 'pywin32-ctypes', 'setuptools',
-            'pyinstaller-hooks-contrib', 'Pillow')
+            'pyinstaller-hooks-contrib', 'Pillow', 'certifi')
 
 
 def collect():

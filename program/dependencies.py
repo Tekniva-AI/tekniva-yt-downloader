@@ -7,13 +7,32 @@ import subprocess
 import tempfile
 import urllib.request
 import zipfile
+import ssl
 from pathlib import Path
+from functools import lru_cache
 
 NODE_VERSION = '22.23.3'
 NODE_ARCHIVE = f'node-v{NODE_VERSION}-win-x64.zip'
 NODE_URL = f'https://nodejs.org/dist/v{NODE_VERSION}/{NODE_ARCHIVE}'
 NODE_SHA256 = '2b0ff57b049cda1bbcea2240eec20467018713c1efe1f7360c2681859b90ed71'
 NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+
+
+def tls_context():
+    import certifi
+    context = ssl.create_default_context()
+    context.load_verify_locations(cafile=certifi.where())
+    return context
+
+
+def ffmpeg_path():
+    import imageio_ffmpeg
+    # Prefer the shipped static binary over unrelated global environment settings.
+    directory = Path(imageio_ffmpeg.__file__).parent / 'binaries'
+    for candidate in directory.glob('ffmpeg-win-*.exe'):
+        if candidate.is_file():
+            return str(candidate)
+    return imageio_ffmpeg.get_ffmpeg_exe()
 
 
 class InstallCancelled(Exception):
@@ -36,11 +55,19 @@ def local_node(app_dir):
     return Path(app_dir) / 'tools' / f'node-v{NODE_VERSION}' / 'node.exe'
 
 
+@lru_cache(maxsize=8)
+def checked_node(path, size, modified):
+    return usable_node(path)
+
+
 def node_path(app_dir):
     candidates = (local_node(app_dir), shutil.which('node'))
     for candidate in candidates:
-        if candidate and Path(candidate).is_file() and usable_node(candidate):
-            return str(Path(candidate).resolve())
+        if candidate and Path(candidate).is_file():
+            path = Path(candidate).resolve()
+            stat = path.stat()
+            if checked_node(str(path), stat.st_size, stat.st_mtime_ns):
+                return str(path)
     return None
 
 
@@ -65,7 +92,7 @@ def install_node(app_dir, progress=lambda phase, percent: None, cancel=None):
         request = urllib.request.Request(NODE_URL, headers={'User-Agent': 'Tekniva-YT-Downloader'})
         digest, downloaded, last_percent = hashlib.sha256(), 0, -1
         progress('download', 0)
-        with urllib.request.urlopen(request, timeout=25) as response, archive_path.open('wb') as target:
+        with urllib.request.urlopen(request, timeout=25, context=tls_context()) as response, archive_path.open('wb') as target:
             total = int(response.headers.get('Content-Length', 0))
             if total > 80 * 1024**2:
                 raise ValueError('Unexpected Node.js archive size')

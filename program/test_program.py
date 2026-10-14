@@ -336,6 +336,7 @@ class ProgramTests(unittest.TestCase):
                 split_output.mkdir()
                 options = make_options({'format': 'MP4', 'quality': 'En yüksek'}, split_output, SilentLog(), hooks)
                 options.update(sleep_interval=0, max_sleep_interval=0)
+                options.update(tekniva_transfer='Hızlı (8 bağlantı)', concurrent_fragment_downloads=8)
                 info = {'_type': 'video', 'id': 'twostreams', 'title': 'Two streams', 'extractor_key': 'Generic',
                         'webpage_url': url, 'formats': [
                             {'format_id': 'v', 'url': url + '?video', 'ext': 'mp4', 'vcodec': 'h264', 'acodec': 'none', 'height': 180, 'fps': 25},
@@ -399,6 +400,7 @@ class ProgramTests(unittest.TestCase):
         downloads = []
         class Downloader:
             def __init__(self, options): self.options = options
+            def add_post_processor(self, processor): pass
             def __enter__(self): return self
             def __exit__(self, *args): pass
             def extract_info(self, url, download): return {'id': url.split('v=')[-1]}
