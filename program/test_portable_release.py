@@ -43,7 +43,7 @@ def verify():
             run('--check', report)
             dependencies = json.loads(report.read_text())
             assert dependencies['node'] and dependencies['ffmpeg'] and dependencies['aria2'], dependencies
-            assert dependencies['ejs_ready'] and dependencies['tls_bundle'], dependencies
+            assert dependencies['ejs_ready'] and dependencies['tls_bundle'] and dependencies['curl_cffi'], dependencies
             run('--verify-media', report)
             media = json.loads(report.read_text(encoding='utf-8'))
             assert media['ok'], media

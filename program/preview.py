@@ -19,7 +19,9 @@ def preview(app):
     app.fmt.set('MP3')
     app.quality.set('320 kbps')
     app.scope.set('Videolar + Shorts + yayın kayıtları')
-    app.speed_mode.set('Hızlı (8 bağlantı)')
+    app.speed_mode.set('Otomatik (önerilen)')
+    app.engine.set('curl_cffi')
+    app.clipboard_watch.set(False)
     app.refresh_language()
     entries = [
         {'id': 'demo0000001', 'title': 'Tekniva Sessions - Gece Yolculuğu', 'duration': 242},
@@ -31,6 +33,16 @@ def preview(app):
     ]
     app.action = 'list'
     app.handle({'kind': 'list', 'folder': app.output.get(), 'channel': 'Tekniva', 'entries': entries})
+    from PIL import Image, ImageDraw, ImageTk
+    for index, entry in enumerate(entries):
+        app.entries[entry['id']]['channel'] = 'Tekniva Sessions' if index < 3 else 'Tekniva Studio'
+        app.table.set(entry['id'], 'source', app.entries[entry['id']]['channel'])
+        image = Image.new('RGB', (54, 32), ('#23666E', '#725387', '#937940', '#42639D', '#28796A', '#944E64')[index])
+        draw = ImageDraw.Draw(image)
+        draw.ellipse((28, 3, 49, 24), outline='#C1F5E9', width=2)
+        draw.line((0, 26, 14, 15, 26, 29, 39, 21, 54, 31), fill='#EAF8F4', width=2)
+        app.thumbnail_images[entry['id']] = ImageTk.PhotoImage(image, master=app.root)
+        app.table.item(entry['id'], image=app.thumbnail_images[entry['id']])
     app.action = None
     app.selected_ids = {'demo0000001', 'demo0000002', 'demo0000003'}
     app.states = {'demo0000001': ('completed', 100), 'demo0000002': ('downloading', 64)}
@@ -45,7 +57,7 @@ def preview(app):
     app.overall_bar['value'] = 33
     app.root.deiconify()
     app.root.protocol('WM_DELETE_WINDOW', app.root.quit)
-    app.root.geometry('960x650+60+60')
+    app.root.geometry('1000x640+60+60')
     app.apply_theme()
     app.root.update()
     if args.settings:

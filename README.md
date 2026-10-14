@@ -1,17 +1,17 @@
 # Tekniva YT Downloader
 
-[![Version](https://img.shields.io/badge/version-beta%200.1.7-blue)](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases)
+[![Version](https://img.shields.io/badge/version-beta%200.1.8-blue)](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases)
 [![Windows](https://img.shields.io/badge/platform-Windows%20x64-0078D4)](#kurulum)
 [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-green)](LICENSE)
 [![Tests](https://github.com/Tekniva-AI/tekniva-yt-downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/Tekniva-AI/tekniva-yt-downloader/actions/workflows/ci.yml)
 
 YouTube ve YouTube Music bağlantılarından seçtiğiniz videoları **MP4**, şarkıları **kapak resmi içeren MP3** olarak indiren, yedi dil destekli açık kaynak Windows masaüstü uygulaması.
 
-**[Windows için indir →](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.7-beta)** · [Değişiklikler](CHANGELOG.md) · [Katkıda bulun](CONTRIBUTING.md) · [Topluluk](https://github.com/Tekniva-AI/tekniva-yt-downloader/discussions) · [Instagram](https://www.instagram.com/tekniva.com.tr/)
+**[Windows için indir →](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.8-beta)** · [Değişiklikler](CHANGELOG.md) · [Katkıda bulun](CONTRIBUTING.md) · [Topluluk](https://github.com/Tekniva-AI/tekniva-yt-downloader/discussions) · [Instagram](https://www.instagram.com/tekniva.com.tr/)
 
 ## Ekran görüntüleri
 
-Görseller beta 0.1.4 arayüzünü gösterir; beta 0.1.7 ek olarak uygulama içinden bileşen kurulumu sunar. Listelerdeki içerikler tanıtım için hazırlanmış örneklerdir.
+Görseller beta 0.1.8 arayüzünü gösterir. Kuyruk odaklı tasarım, Tekniva renkleri ve kompakt araç çubuğu kullanır. Listelerdeki içerikler tanıtım için hazırlanmış örneklerdir.
 
 ### Koyu görünüm
 
@@ -23,7 +23,11 @@ Görseller beta 0.1.4 arayüzünü gösterir; beta 0.1.7 ek olarak uygulama içi
 
 ### Ayarlar
 
-![Dil, tema, kayıt klasörü ve alt klasör seçenekleri](docs/images/settings-dark.png)
+![Dil ve tema seçenekleri](docs/images/settings-dark.png)
+
+![Varsayılan curl_cffi, aria2 motor seçimi ve pano takibi](docs/images/settings-network-dark.png)
+
+![Kayıt klasörü ve kanal/sanatçı/oynatma listesi alt klasör seçenekleri](docs/images/settings-storage-dark.png)
 
 ## Özellikler
 
@@ -33,7 +37,9 @@ Görseller beta 0.1.4 arayüzünü gösterir; beta 0.1.7 ek olarak uygulama içi
 - MP4 için mevcut en yüksek kalite veya 2160p, 1440p, 1080p, 720p, 480p, 360p sınırı.
 - MP3 için 128, 192 ve 320 kbps seçenekleri; JPEG ön kapak ve ID3v2.3 etiketleri.
 - Yüzdelik indirme ve FFmpeg hazırlama ilerlemesi; geçen süre, durdurma ve açıklayıcı hata kayıtları.
-- Önerilen Otomatik modda yerleşik aktarım, 8 MiB HTTP parçaları ve dört parçalı akış bağlantısı; Hızlı modda aria2 ve hata halinde yerleşik aktarım.
+- Varsayılan `curl_cffi` bağlantı katmanı; Ayarlar’dan isteğe bağlı aria2 motoru seçimi. Bağlantı sayısı motor tercihinden bağımsızdır.
+- Tam genişlikte kuyruk, kapak önizlemeleri, kanal/sanatçı sütunu ve bekleyen/tamamlanan/hatalı filtreleri.
+- Panodan bağlantı ekleme; isteğe bağlı otomatik pano takibi, sağ tık menüsü ve tamamlanan dosyayı çift tıklayarak açma.
 - Sadece içerik başlığından oluşan dosya adları. Aynı başlıkta farklı içeriklere çakışmayan adlar atanır.
 - Varsayılan olarak doğrudan seçilen klasöre kayıt. İsteğe bağlı kanal, sanatçı ve oynatma listesi alt klasörleri.
 - Silinen veya boş kalan dosyayı yeniden indirme. Yardımcı kayıtlar indirme klasörüne yazılmaz.
@@ -41,10 +47,10 @@ Görseller beta 0.1.4 arayüzünü gösterir; beta 0.1.7 ek olarak uygulama içi
 
 ## Kurulum
 
-1. [Release sayfasından](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.7-beta) `Tekniva-YT-Downloader-0.1.7-Windows-x64.zip` dosyasını indirin.
+1. [Release sayfasından](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.8-beta) `Tekniva-YT-Downloader-0.1.8-Windows-x64.zip` dosyasını indirin.
 2. ZIP'i yazma izniniz olan bir klasöre çıkarın. Uygulamayı ZIP'in içinden çalıştırmayın.
 3. Node.js eksik veya eskiyse ilk listeleme/indirme işleminde uygulama kurulum onayı ister. **Evet** seçildiğinde resmi Node.js bileşeni otomatik indirilir, doğrulanır ve uygulama klasörüne eklenir. İşlem daha sonra kendiliğinden devam eder.
-4. `Tekniva YT Downloader.exe` dosyasını açın. Python, FFmpeg ve aria2 pakete dahildir. Tek EXE indirdiyseniz onu da yazılabilir bir klasöre koyup açın; aynı otomatik bileşen kurulumu çalışır.
+4. `Tekniva YT Downloader.exe` dosyasını açın. Python, curl_cffi, FFmpeg ve aria2 pakete dahildir. Tek EXE indirdiyseniz onu da yazılabilir bir klasöre koyup açın; aynı otomatik bileşen kurulumu çalışır.
 
 Eksik Node.js için sistem kurulumu, PATH değişikliği veya yönetici izni gerekmez. Uygulama `tools/node-v22.23.3/node.exe` ve Node.js lisansını kendi klasöründe tutar. EXE ve ZIP aynı davranışı sunar. İlk bileşen kurulumu internet bağlantısı gerektirir; sonraki açılışlarda yerel kopya yeniden kullanılır. İndirme sırasında yüzde gösterilir ve iptal edilebilir. Onayı reddetmek işlemi başlatmaz; daha sonra yeniden deneyebilirsiniz.
 
@@ -55,7 +61,7 @@ Release içinde taşınabilir ZIP, ayrı EXE ve `SHA256SUMS.txt` bulunur. Kaynak
 İndirilen dosyanın bütünlüğünü kontrol etmek için PowerShell'de:
 
 ```powershell
-Get-FileHash .\Tekniva-YT-Downloader-0.1.7-Windows-x64.zip -Algorithm SHA256
+Get-FileHash .\Tekniva-YT-Downloader-0.1.8-Windows-x64.zip -Algorithm SHA256
 ```
 
 Çıkan değeri release içindeki `SHA256SUMS.txt` ile karşılaştırın.
@@ -91,7 +97,20 @@ Uygulama klasöründeki `ayarlar.json`, `kuyruk.json`, `veri/` ve `islem-kayitla
 
 MP3 320 kbps seçimi kaynak ses kalitesini artırmaz; daha düşük kaliteli kaynağı 320 kbps olarak dönüştürür. MP4'te Opus ses bit hızı değişken olabilir ve oynatıcı 122–128 kbps gösterebilir. Bu sayı tek başına uygulamanın sesi düşürdüğünü göstermez.
 
-**Otomatik (önerilen)** temiz bilgisayarlarda varsayılandır: yerleşik indirici, 8 MiB HTTP parçaları ve parçalı akışlarda dört bağlantı kullanır. Bu mod ayrı aria2 RPC bağlantısı gerektirmez. **Hızlı** mod uygun HTTP akışlarında aria2 ile sekiz bağlantı kullanır; hata alınırsa yeni URL ile yerleşik indirici denenir, gerektiğinde aynı video kalitesini koruyan HLS akışı aranır. Eski ayarlarınız Hızlı modda kalmışsa sorun yaşadığınızda Otomatik'i seçin. Dengeli dört, Uyumlu tek parçalı akış bağlantısı kullanır.
+**Ayarlar → Bağlantı ve kuyruk → İndirme motoru** bölümünde `curl_cffi` varsayılandır. yt-dlp’nin HTTP/HTTPS istekleri bu bağlantı katmanına yönlendirilir; tarayıcı taklidi zorlanmaz. Bileşen EXE ve ZIP içine dahildir. Eski ayarlarda motor seçimi bulunmuyorsa curl_cffi atanır. aria2 isteyen kullanıcı aynı menüden seçebilir; aria2 uygun HTTP akışlarını çoklu bağlantıyla indirir. Kanal listelerini çözümlemek ve format seçmek için yt-dlp kullanılır.
+
+**Aktarım modu** motor seçiminden bağımsızdır: Otomatik/Dengeli dört, Hızlı sekiz, Uyumlu tek bağlantı kullanır. curl_cffi ile bu sayı parçalı HLS/DASH akışlarının eşzamanlılığını belirler; düz HTTP dosyasını otomatik olarak sekiz bağlantıya bölmez. HTTP indirmelerinde 8 MiB parçalar korunur. Geçici aktarım hatasında yeni URL ile uyumlu yerleşik bağlantı denenir; gerektiğinde aynı çözünürlük ve kare hızını koruyan HLS akışı aranır. Motor değişikliği her ağda daha yüksek hız garantilemez.
+
+### Kuyruk araçları
+
+- **Panodan ekle** geçerli YouTube bağlantısını kuyruğa ekler. Bağlantı alanında Enter da sıraya ekler. Liste odaktayken Ctrl+V panodan ekleme, Space seçim ve Enter dosyayı açma için kullanılabilir. Metin alanlarında normal yapıştırma korunur.
+- **Ayarlar → Bağlantı ve kuyruk → Kopyalanan YouTube bağlantılarını sıraya ekle** isteğe bağlıdır ve başlangıçta kapalıdır. Açıksa program boşta olduğunda yeni kopyalanan bağlantıyı ekler; otomatik indirme başlatmaz.
+- **Tümü / Bekleyen / Tamamlanan / Hatalar** filtreleri aramayla birlikte çalışır. Arama başlık ve kanal/sanatçı metnini kapsar. Yeni liste veya bağlantı eklendiğinde filtre sıfırlanır.
+- **Sağ tık** dosyayı veya YouTube kaynağını açar ve kuyruktaki öğeyi kaldırır. Tamamlanan satıra çift tıklamak dosyayı açar. Dosya silinmişse yeniden indirme için açıklama gösterilir.
+- Kapak önizlemeleri arka planda yüklenir; kapak alınamaması listeleme ve indirmeyi engellemez. Önizlemeler MP3 içine gömülen kapaktan bağımsızdır.
+
+Tasarımda [MediaHuman’ın kuyruk odaklı kullanım yaklaşımından](https://www.mediahuman.com/youtube-downloader/) esinlenildi. Tekniva YT Downloader bağımsız geliştirilen, GPL-3.0-or-later lisanslı bir projedir.
+
 
 Her görüntü/ses akışı öncesindeki 5–10 saniyelik beklemeler kaldırıldı. Toplu indirmede içerikler arasında Otomatik/Dengeli modda 5, Hızlı modda 2, Uyumlu modda 8 saniyelik kısa aralık bırakılır. Servis sınırı bildirilirse ayrıca 30/90 saniyelik sınırlı geri çekilme uygulanır.
 
@@ -140,7 +159,7 @@ py -3.13 -m venv .venv
 
 Temel testler yerel HTTP sunucusu ve sentetik medya kullanır; YouTube'dan gerçek şarkı indirmez. Tema doğrulaması görünür test pencereleri açar. `--rebuild` mevcut sürümü tekrar paketler; seçenek verilmezse patch sürümü artar. Sürümün tek kaynağı `program/translations.py` içindeki `VERSION` değeridir. Sürüm yayımlarken changelog ve README bağlantılarını da güncelleyin.
 
-Tag `v0.1.7-beta` biçimindedir. `release.yml` sürümü tag ile karşılaştırır, testleri çalıştırır ve temiz Windows ZIP/EXE/checksum dosyalarını **taslak release** olarak oluşturur. Maintainer test edip taslağı yayımlar. CI `main` push ve pull request'lerinde testleri çalıştırır.
+Tag `v0.1.8-beta` biçimindedir. `release.yml` sürümü tag ile karşılaştırır, testleri çalıştırır ve temiz Windows ZIP/EXE/checksum dosyalarını **taslak release** olarak oluşturur. Maintainer test edip taslağı yayımlar. CI `main` push ve pull request'lerinde testleri çalıştırır.
 
 Gerçek dağıtım doğrulaması için paketlemeden sonra `python program/test_portable_release.py` çalıştırın. Bu isteğe bağlı test internetten resmi Node.js'i indirir; sistem Node.js/FFmpeg'i görünmez yapan izole klasörlerde EXE ve ZIP kurulumunu, EJS/sertifika kaynaklarını, yerel HTTP indirmesini ve gerçek kapaklı MP3/MP4 hazırlamasını denetler. Ses testi üretilmiş kısa bir örnekte yeni tek geçişi eski üç geçişli MP3 yolu ile karşılaştırır; sonuç tüm cihazlarda aynı hız artışını garanti etmez. Release iş akışı bu kontrolü otomatik çalıştırır.
 
@@ -175,7 +194,7 @@ Copyright © 2026 Tekniva. Proje **GPL-3.0-or-later** lisansı ile paylaşılır
 
 **Tekniva YT Downloader** is an open-source Windows desktop app for selectively downloading YouTube and YouTube Music content as MP4 or MP3 with embedded cover art. It supports queues, searching, sortable lists, seven interface languages, light/dark themes and optional channel/artist/playlist folders.
 
-Download the portable Windows x64 ZIP from [Releases](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases). Extract it to a writable directory and launch `Tekniva YT Downloader.exe`. Python is bundled. If a compatible Node.js runtime is missing, the app asks for consent, downloads a checksum-verified official portable runtime into its own folder, and resumes your operation. No administrator access, PATH changes or separate system installation are needed. The standalone EXE works the same way as the ZIP distribution. FFmpeg and aria2 are included. Paste a video/channel/playlist link, fetch the list or append it to the queue, choose format/quality, select rows and download.
+Download the portable Windows x64 ZIP from [Releases](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases). Extract it to a writable directory and launch `Tekniva YT Downloader.exe`. Python is bundled. If a compatible Node.js runtime is missing, the app asks for consent, downloads a checksum-verified official portable runtime into its own folder, and resumes your operation. No administrator access, PATH changes or separate system installation are needed. The standalone EXE works the same way as the ZIP distribution. curl_cffi, FFmpeg and aria2 are included. curl_cffi is the default HTTP transport; choose aria2 in Settings → Connection and queue. Connection counts are configured separately. The redesigned full-width queue offers thumbnails, channel/artist search, pending/completed/error filters, clipboard paste, optional clipboard monitoring and a file/source context menu. Paste a video/channel/playlist link, fetch the list or append it to the queue, choose format/quality, select rows and download.
 
 Source setup: Python 3.13; Node.js can be provided by the same consent-based local installer, install `requirements-dev.txt`, run `program/bootstrap_tools.py`, then `program/kanal_indirici.py`. Tests: `python program/test_program.py`. Build the current version: `python program/build_release.py --rebuild`, then `python program/package_release.py`. Omit `--rebuild` only when intentionally incrementing the patch version.
 

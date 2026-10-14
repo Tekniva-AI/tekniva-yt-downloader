@@ -57,9 +57,9 @@ class PerformanceTests(unittest.TestCase):
                 if self.number == 1:
                     raise yt_dlp.utils.DownloadError('aria2c exited with code 1')
                 return info
-        with patch.object(yt_dlp, 'YoutubeDL', Downloader), patch('kanal_indirici.aria2_path', return_value='aria2c'):
+        with patch('kanal_indirici.create_downloader', Downloader), patch('kanal_indirici.aria2_path', return_value='aria2c'):
             result = download_with_recovery('https://youtube.com/watch?v=sample',
-                       {'logger': Log(), 'tekniva_transfer': 'Hızlı (8 bağlantı)', 'concurrent_fragment_downloads': 8},
+                       {'logger': Log(), 'tekniva_transfer': 'Hızlı (8 bağlantı)', 'tekniva_engine': 'aria2', 'concurrent_fragment_downloads': 8},
                        lambda *args, **kwargs: None, sleep=lambda seconds: None)
         self.assertIn('external_downloader', attempts[0])
         self.assertNotIn('external_downloader', attempts[1])

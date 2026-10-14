@@ -17,6 +17,7 @@ from urllib.parse import urlparse, parse_qs
 
 APP_DIR = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
 from dependencies import node_path, node_runtime_options, install_node, ffmpeg_path
+from transfer import create_downloader
 PROJECT = APP_DIR.parent
 NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
 VIDEO_QUALITIES = ['En yüksek', '2160p (4K)', '1440p (2K)', '1080p', '720p', '480p', '360p']
@@ -144,7 +145,7 @@ def get_entries(job, logger):
     source_type, base = normalize_source(job['url'])
     entries, seen = [], set()
     channel_title, skipped_live = '', 0
-    with yt_dlp.YoutubeDL({'extract_flat': 'in_playlist', 'skip_download': True, 'noplaylist': source_type != 'playlist',
+    with create_downloader({'extract_flat': 'in_playlist', 'skip_download': True, 'noplaylist': source_type != 'playlist',
                           'cachedir': str(APP_DIR / 'veri' / 'cache'),
                           'logger': logger, 'socket_timeout': 25, 'js_runtimes': node_runtime_options(APP_DIR)}) as ydl:
         urls = [base] if source_type != 'channel' else [base + '/' + tab for tab in (['videos', 'shorts', 'streams'] if job['all_tabs'] else ['videos'])]
@@ -167,6 +168,7 @@ def get_entries(job, logger):
                 entries.append({'id': entry['id'], 'title': entry.get('title') or entry['id'],
                                 'duration': entry.get('duration'), 'channel': entry.get('channel') or entry.get('uploader') or info.get('channel') or info.get('uploader') or channel_title,
                                 'artist': entry.get('artist') or ', '.join(entry.get('artists') or []),
+                                'thumbnail': entry.get('thumbnail') or next((item.get('url') for item in reversed(entry.get('thumbnails') or []) if item.get('url')), None),
                                 'playlist_title': info.get('title') if source_type == 'playlist' else None,
                                 'url': f'https://{host}/watch?v=' + entry['id']})
     return entries, channel_title, skipped_live
@@ -187,6 +189,7 @@ def make_options(job, folder, logger, hooks):
         'skip_unavailable_fragments': False,
         'concurrent_fragment_downloads': connection_count(job),
         'tekniva_transfer': job.get('speed', SPEED_MODES[0]),
+        'tekniva_engine': job.get('engine', 'curl_cffi'),
         'http_chunk_size': 8 * 1024**2,
         'socket_timeout': 25,
         'noplaylist': True,
@@ -230,7 +233,12 @@ def download_with_recovery(url, options, emit, sleep=time.sleep):
         current = dict(options)
         stop_monitor = threading.Event()
         monitor = None
-        if attempt == 0 and current.get('tekniva_transfer') == 'Hızlı (8 bağlantı)' and aria2_path():
+        if attempt:
+            current['tekniva_engine'] = 'native'
+        elif current.get('tekniva_engine') == 'aria2' and not aria2_path():
+            current['tekniva_engine'] = 'curl_cffi'
+            current['logger'].warning('aria2 is missing; using bundled curl_cffi.')
+        if attempt == 0 and current.get('tekniva_engine') == 'aria2' and aria2_path():
             with socket.socket() as sock:
                 sock.bind(('127.0.0.1', 0))
                 port = sock.getsockname()[1]
@@ -283,7 +291,7 @@ def download_with_recovery(url, options, emit, sleep=time.sleep):
                 current['format'] = selector.replace('bv*', 'bv*[protocol^=m3u8]').replace('+ba', '+ba[protocol^=m3u8]').replace('/b', '/b[protocol^=m3u8]')
             current['concurrent_fragment_downloads'] = min(4, current.get('concurrent_fragment_downloads', 1))
         try:
-            with yt_dlp.YoutubeDL(current) as downloader:
+            with create_downloader(current) as downloader:
                 if current.get('tekniva_mp3'):
                     from media_processing import FastMP3TagsPP
                     downloader.add_post_processor(FastMP3TagsPP(downloader))
@@ -300,7 +308,7 @@ def download_with_recovery(url, options, emit, sleep=time.sleep):
             if attempt == 2 or not retryable_error(error):
                 raise
             if error_code(error) == 'tls':
-                options['prefer_system_certs'] = True
+                options['compat_opts'] = set(options.get('compat_opts') or ()) | {'no-certifi'}
             limited = any(term in str(error).casefold() for term in ('429', 'too many requests', 'try again later'))
             delay = (30 if attempt == 0 else 90) if limited else (5 if attempt == 0 else 10)
             emit('status', text=f'Geçici bağlantı hatası. {delay} sn sonra yeniden deneniyor ({attempt + 2}/3)…')
@@ -462,7 +470,7 @@ def run_worker(job_path):
         for index, entry in enumerate(entries, 1):
             if job.get('artist_subfolders') and not entry.get('artist'):
                 # Flat channel/playlist listings may omit music metadata.
-                with yt_dlp.YoutubeDL({'skip_download': True, 'noplaylist': True, 'logger': logger,
+                with create_downloader({'skip_download': True, 'noplaylist': True, 'logger': logger,
                                       'cachedir': str(APP_DIR / 'veri' / 'cache'),
                                       'socket_timeout': 25, 'js_runtimes': node_runtime_options(APP_DIR)}) as resolver:
                     try:
@@ -485,7 +493,7 @@ def run_worker(job_path):
             emit('current', id=entry['id'], title=entry['title'], index=index, total=len(entries), folder=str(folder))
             if entry['id'] in archived_ids and archived_file_exists(folder, entry, names, job['format']):
                 skipped += 1
-                emit('item', id=entry['id'], state='Zaten indirildi')
+                emit('item', id=entry['id'], state='Zaten indirildi', filepath=str(folder / (names.get(entry['id'], entry['title']) + '.' + job['format'].lower())))
             else:
                 try:
                     if queue_downloads:
@@ -511,7 +519,7 @@ def run_worker(job_path):
                     if not result:
                         raise yt_dlp.utils.DownloadError('Video indirilemedi; ayrıntılar kayıt dosyasında.')
                     completed += 1
-                    emit('item', id=entry['id'], state='Tamamlandı')
+                    emit('item', id=entry['id'], state='Tamamlandı', filepath=str(folder / (stem + '.' + job['format'].lower())))
                 except (yt_dlp.utils.DownloadError, OSError) as error:
                     failed += 1
                     emit('item', id=entry['id'], state='Hata', error=str(error), error_code=error_code(error))
@@ -557,6 +565,9 @@ if __name__ == '__main__':
         import yt_dlp_ejs
         import yt_dlp_ejs.yt.solver
         import certifi
+        import curl_cffi
+        with create_downloader({'quiet': True}) as downloader:
+            curl_ready = 'CurlCFFI' in downloader._request_director.handlers
         ffmpeg = ffmpeg_path()
         check = subprocess.run([ffmpeg, '-version'], capture_output=True, creationflags=NO_WINDOW)
         runtime = node_path(APP_DIR)
@@ -564,6 +575,7 @@ if __name__ == '__main__':
                                                 'aria2': bool(aria2_path()), 'yt_dlp': yt_dlp.version.__version__,
                                                 'ejs_ready': bool(yt_dlp_ejs.yt.solver.core() and yt_dlp_ejs.yt.solver.lib()),
                                                 'tls_bundle': Path(certifi.where()).is_file(),
+                                                'curl_cffi': curl_ready, 'curl_cffi_version': curl_cffi.__version__,
                                                 'ejs': str(yt_dlp_ejs.__file__)}, indent=2), encoding='utf-8')
     else:
         run_gui()

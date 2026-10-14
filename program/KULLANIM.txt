@@ -1,4 +1,17 @@
-TEKNIVA YT DOWNLOADER — beta 0.1.7
+TEKNIVA YT DOWNLOADER — beta 0.1.8
+
+YENİ ÖZELLİKLER — beta 0.1.8
+curl_cffi varsayılan indirme bağlantısıdır ve pakete dahildir.
+Ayarlar / Bağlantı ve kuyruk sekmesinden aria2 seçilebilir.
+Aktarım modu ve kanal kapsamı da bu sekmede yer alır.
+Tam genişlikte kuyrukta kapak önizlemeleri ve kanal/sanatçı sütunu bulunur.
+Bekleyen, tamamlanan ve hata filtreleri aramayla birlikte çalışır.
+Panodan ekle düğmesi, bağlantı alanında Enter veya liste odaktayken Ctrl+V
+ile sıraya ekleyin. Space seçim yapar. Tamamlanan dosyayı çift tıklayarak açın.
+Sağ tık menüsünden dosyayı/YouTube kaynağını açabilir veya öğeyi kaldırabilirsiniz.
+Otomatik pano takibi varsayılan kapalıdır; Ayarlar'dan etkinleştirilebilir.
+Kopyalanan bağlantı sıraya eklenir, indirme sizin seçiminizle başlar.
+Kayıt klasörü ve alt klasör tercihleri Ayarlar / Kayıt sekmesindedir.
 
 YENİ ÖZELLİKLER — beta 0.1.7
 Temiz kurulumda önerilen aktarım modu Otomatik'tir. Sorun yaşayan mevcut

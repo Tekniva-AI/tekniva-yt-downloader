@@ -1,6 +1,6 @@
 """Complete UI catalog. Internal download settings remain language independent."""
 LANGUAGES = {'tr': 'Türkçe', 'en': 'English', 'de': 'Deutsch', 'fr': 'Français', 'es': 'Español', 'ar': 'العربية', 'hi': 'हिन्दी'}
-VERSION = 'beta 0.1.7'
+VERSION = 'beta 0.1.8'
 ROWS = {
  'automatic': ['Otomatik (önerilen)', 'Automatic (recommended)', 'Automatisch (empfohlen)', 'Automatique (conseillé)', 'Automático (recomendado)', 'تلقائي (موصى به)', 'स्वचालित (अनुशंसित)'],
  'queue_pause': ['Sonraki içerik için kısa bekleme…', 'Brief pause before the next item…', 'Kurze Pause vor dem nächsten Inhalt…', 'Courte pause avant le contenu suivant…', 'Pausa breve antes del siguiente contenido…', 'انتظار قصير قبل المحتوى التالي…', 'अगले आइटम से पहले थोड़ा विराम…'],
@@ -106,6 +106,26 @@ ROWS = {
  'no_results': ['Aramanızla eşleşen öğe yok.', 'No items match your search.', 'Keine passenden Ergebnisse.', 'Aucun résultat correspondant.', 'No hay resultados coincidentes.', 'لا توجد نتائج مطابقة.', 'खोज से मेल खाता आइटम नहीं है।'],
  'retry': ['Bağlantı yeniden deneniyor…', 'Retrying connection…', 'Verbindung erneut versuchen…', 'Nouvelle tentative de connexion…', 'Reintentando conexión…', 'إعادة محاولة الاتصال…', 'कनेक्शन फिर आज़मा रहे हैं…'],
 }
+ROWS.update({
+ 'paste': ['Panodan ekle', 'Paste link', 'Link einfügen', 'Coller un lien', 'Pegar enlace', 'لصق رابط', 'लिंक पेस्ट करें'],
+ 'clipboard_empty': ['Panoda geçerli bir YouTube bağlantısı yok.', 'No valid YouTube link in the clipboard.', 'Kein gültiger YouTube-Link in der Zwischenablage.', 'Aucun lien YouTube valide dans le presse-papiers.', 'No hay un enlace válido de YouTube en el portapapeles.', 'لا يوجد رابط YouTube صالح في الحافظة.', 'क्लिपबोर्ड में मान्य YouTube लिंक नहीं है।'],
+ 'queue_all': ['Tümü', 'All', 'Alle', 'Tout', 'Todos', 'الكل', 'सभी'],
+ 'queue_waiting': ['Bekleyen', 'Pending', 'Ausstehend', 'En attente', 'Pendientes', 'قيد الانتظار', 'लंबित'],
+ 'queue_completed': ['Tamamlanan', 'Completed', 'Abgeschlossen', 'Terminés', 'Completados', 'المكتملة', 'पूर्ण'],
+ 'queue_failed': ['Hatalar', 'Errors', 'Fehler', 'Erreurs', 'Errores', 'الأخطاء', 'त्रुटियाँ'],
+ 'source': ['Kanal / Sanatçı', 'Channel / Artist', 'Kanal / Künstler', 'Chaîne / Artiste', 'Canal / Artista', 'القناة / الفنان', 'चैनल / कलाकार'],
+ 'transfer_settings': ['Bağlantı ve kuyruk', 'Connection and queue', 'Verbindung und Warteschlange', 'Connexion et file', 'Conexión y cola', 'الاتصال والقائمة', 'कनेक्शन और कतार'],
+ 'engine': ['İndirme motoru', 'Download engine', 'Download-Engine', 'Moteur de téléchargement', 'Motor de descarga', 'محرك التنزيل', 'डाउनलोड इंजन'],
+ 'engine_default': ['curl_cffi (varsayılan)', 'curl_cffi (default)', 'curl_cffi (Standard)', 'curl_cffi (par défaut)', 'curl_cffi (predeterminado)', 'curl_cffi (الافتراضي)', 'curl_cffi (डिफ़ॉल्ट)'],
+ 'engine_hint': ['curl_cffi uygulamaya dahildir. aria2 seçimi HTTP indirmelerinde çoklu bağlantı kullanır. Hata halinde uyumlu bağlantı yeniden denenir.', 'curl_cffi is bundled. aria2 uses multiple connections for HTTP downloads. A compatible connection is retried on failure.', 'curl_cffi ist enthalten. aria2 nutzt mehrere Verbindungen für HTTP-Downloads. Bei Fehlern wird eine kompatible Verbindung erneut versucht.', 'curl_cffi est inclus. aria2 utilise plusieurs connexions pour les téléchargements HTTP. Une connexion compatible est réessayée en cas d’échec.', 'curl_cffi está incluido. aria2 usa varias conexiones para descargas HTTP. Si falla, se reintenta con una conexión compatible.', 'curl_cffi مضمّن. يستخدم aria2 اتصالات متعددة لتنزيل HTTP. عند الفشل يُعاد المحاولة باتصال متوافق.', 'curl_cffi शामिल है। aria2 HTTP डाउनलोड में कई कनेक्शन उपयोग करता है। विफल होने पर संगत कनेक्शन से पुनः प्रयास होता है।'],
+ 'clipboard_watch': ['Kopyalanan YouTube bağlantılarını sıraya ekle', 'Add copied YouTube links to the queue', 'Kopierte YouTube-Links zur Warteschlange hinzufügen', 'Ajouter les liens YouTube copiés à la file', 'Añadir enlaces de YouTube copiados a la cola', 'إضافة روابط YouTube المنسوخة إلى القائمة', 'कॉपी किए YouTube लिंक कतार में जोड़ें'],
+ 'clipboard_hint': ['Açıksa yeni kopyalanan bağlantı listeye eklenir. İndirme sizin seçiminizle başlar.', 'When enabled, newly copied links are added to the list. You choose when to download.', 'Neue kopierte Links werden zur Liste hinzugefügt. Sie starten den Download selbst.', 'Les nouveaux liens copiés sont ajoutés à la liste. Vous lancez le téléchargement.', 'Los enlaces nuevos copiados se añaden a la lista. Usted inicia la descarga.', 'تُضاف الروابط الجديدة المنسوخة للقائمة عند التفعيل. تختار وقت بدء التنزيل.', 'सक्षम होने पर नए कॉपी किए लिंक सूची में जुड़ते हैं। डाउनलोड आप शुरू करते हैं।'],
+ 'open_file': ['Dosyayı aç', 'Open file', 'Datei öffnen', 'Ouvrir le fichier', 'Abrir archivo', 'فتح الملف', 'फ़ाइल खोलें'],
+ 'open_source': ['YouTube’da aç', 'Open on YouTube', 'Auf YouTube öffnen', 'Ouvrir sur YouTube', 'Abrir en YouTube', 'فتح في YouTube', 'YouTube पर खोलें'],
+ 'file_missing': ['Dosya bulunamadı. Listeden seçip tekrar indirebilirsiniz.', 'File not found. Select it in the list to download again.', 'Datei nicht gefunden. Zum erneuten Herunterladen in der Liste auswählen.', 'Fichier introuvable. Sélectionnez-le pour le télécharger à nouveau.', 'No se encuentra el archivo. Selecciónelo para descargarlo de nuevo.', 'الملف غير موجود. حدده في القائمة لتنزيله مجددًا.', 'फ़ाइल नहीं मिली। दोबारा डाउनलोड करने के लिए सूची में चुनें।'],
+ 'empty_queue': ['Kuyruğunuz hazır\nBir bağlantı yapıştırın veya bir kanalın listesini getirin.', 'Your queue is ready\nPaste a link or fetch a channel’s list.', 'Ihre Warteschlange ist bereit\nLink einfügen oder eine Kanalliste laden.', 'Votre file est prête\nCollez un lien ou chargez une chaîne.', 'Su cola está lista\nPegue un enlace o cargue un canal.', 'قائمة التنزيل جاهزة\nالصق رابطًا أو اجلب قائمة قناة.', 'आपकी कतार तैयार है\nलिंक पेस्ट करें या चैनल की सूची लाएँ।'],
+ 'shortcut_hint': ['Ctrl+V bağlantı ekle · Space seç · Çift tık dosyayı aç', 'Ctrl+V add link · Space select · Double-click open file', 'Strg+V Link hinzufügen · Leertaste auswählen · Doppelklick Datei öffnen', 'Ctrl+V ajouter un lien · Espace sélectionner · Double-clic ouvrir', 'Ctrl+V añadir enlace · Espacio seleccionar · Doble clic abrir', 'Ctrl+V إضافة رابط · Space تحديد · نقر مزدوج فتح الملف', 'Ctrl+V लिंक जोड़ें · Space चुनें · डबल-क्लिक फ़ाइल खोलें'],
+})
 CATALOG = {lang: {key: values[i] for key, values in ROWS.items()} for i, lang in enumerate(LANGUAGES)}
 
 

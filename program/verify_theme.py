@@ -19,6 +19,8 @@ def contrast(first, second):
 def verify(app):
     with tempfile.TemporaryDirectory() as directory:
         app.config_file = Path(directory) / 'settings.json'
+        app.queue_file = Path(directory) / 'queue.json'
+        app.persistence_enabled = True
         app.output.set(directory)
         app.root.deiconify()
         app.root.update()
@@ -64,13 +66,6 @@ def verify(app):
         dialog.lift()
         app.settings_subfolder_check.event_generate('<Enter>')
         app.root.update()
-        # Let the native window's opening animation finish before capturing it.
-        time.sleep(.35)
-        app.root.update()
-        from PIL import ImageGrab
-        desktop = ImageGrab.grab().resize((app.root.winfo_screenwidth(), app.root.winfo_screenheight()))
-        x, y = dialog.winfo_rootx(), dialog.winfo_rooty()
-        desktop.crop((x, y, x + dialog.winfo_width(), y + dialog.winfo_height())).save(Path(__file__).parent / 'ayarlar-beta-0.1.1.png')
         app.settings_cancel_btn.invoke()
         print(json.dumps({'localized_theme_dialogs': checked, 'text_contrast': '>=4.5', 'live_preview_cancel': True, 'saved_theme': True, 'version': VERSION}))
 

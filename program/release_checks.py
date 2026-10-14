@@ -16,6 +16,7 @@ def verify_media(report_path):
     from kanal_indirici import APP_DIR, NO_WINDOW, make_options, download_with_recovery
     from dependencies import ffmpeg_path
     from media_processing import FastMP3TagsPP, ProcessingProgress
+    from transfer import create_downloader
     state = APP_DIR / 'veri'
     state.mkdir(exist_ok=True)
     results = []
@@ -38,12 +39,13 @@ def verify_media(report_path):
             threading.Thread(target=server.serve_forever, daemon=True).start()
             try:
                 url = f'http://127.0.0.1:{server.server_port}/fixture.mp4'
-                for label, fmt in [('Native MP4', 'MP4'), ('Fast MP4', 'MP4'), ('MP3', 'MP3'), ('Baseline MP3', 'MP3')]:
+                for label, fmt in [('curl_cffi MP4', 'MP4'), ('aria2 MP4', 'MP4'), ('MP3', 'MP3'), ('Baseline MP3', 'MP3')]:
                     output = root / label
                     output.mkdir()
                     logger = Logger()
                     job = {'format': fmt, 'quality': '320 kbps' if fmt == 'MP3' else 'En yüksek',
-                           'speed': 'Hızlı (8 bağlantı)' if label == 'Fast MP4' else 'Otomatik (önerilen)'}
+                           'engine': 'aria2' if label == 'aria2 MP4' else 'curl_cffi',
+                           'speed': 'Hızlı (8 bağlantı)' if label == 'aria2 MP4' else 'Otomatik (önerilen)'}
                     events = []
                     monitor = ProcessingProgress(state / 'check-progress.txt', lambda kind, **data: events.append(data))
                     options = make_options(job, output, logger, {'progress': lambda event: None, 'postprocess': monitor.hook})
@@ -54,7 +56,7 @@ def verify_media(report_path):
                             'thumbnails': [{'url': f'http://127.0.0.1:{server.server_port}/cover.png', 'id': 'cover'}]}
                     started = time.monotonic()
                     try:
-                        if label == 'Fast MP4':
+                        if label == 'aria2 MP4':
                             download_with_recovery(url, options, lambda *args, **kwargs: None)
                         else:
                             if label == 'Baseline MP3':
@@ -63,7 +65,7 @@ def verify_media(report_path):
                                     *options['postprocessors'],
                                     {'key': 'FFmpegMetadata', 'add_metadata': True, 'add_chapters': False, 'add_infojson': False},
                                     {'key': 'EmbedThumbnail', 'already_have_thumbnail': False}]
-                            with yt_dlp.YoutubeDL(options) as ydl:
+                            with create_downloader(options) as ydl:
                                 if label == 'MP3':
                                     ydl.add_post_processor(FastMP3TagsPP(ydl))
                                 ydl.process_ie_result(info, download=True)
@@ -80,7 +82,7 @@ def verify_media(report_path):
                         assert str(tags['TPE1']) == 'Test Artist'
                     assert not list(output.glob('*.json')) + list(output.glob('*.txt')) + list(output.glob('*.png')) + list(output.glob('*.jpg'))
                     passes = sum('ffmpeg command line:' in message and '.mp3' in message for message in logger.messages)
-                    results.append({'case': label, 'seconds': round(time.monotonic() - started, 3), 'mp3_ffmpeg_passes': passes,
+                    results.append({'case': label, 'engine': job['engine'], 'seconds': round(time.monotonic() - started, 3), 'mp3_ffmpeg_passes': passes,
                                     'retries': [m for m in logger.messages if 'Fresh URL retry' in m]})
                 optimized = next(item for item in results if item['case'] == 'MP3')
                 baseline = next(item for item in results if item['case'] == 'Baseline MP3')

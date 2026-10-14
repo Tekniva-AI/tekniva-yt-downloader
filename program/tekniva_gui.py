@@ -9,6 +9,8 @@ import uuid
 import webbrowser
 import threading
 import queue
+import io
+from urllib.parse import urlparse
 from dependencies import node_path, install_node, InstallCancelled
 from pathlib import Path
 import tkinter as tk
@@ -33,6 +35,10 @@ def run_gui(test_callback=None):
             self.event_buffer = ''
             self.got_final = self.stopping = False
             self.entries = {}
+            self.thumbnail_jobs = queue.SimpleQueue()
+            self.thumbnail_results = queue.SimpleQueue()
+            self.thumbnail_images = {}
+            self.thumbnail_requested = set()
             self.selected_ids = set()
             self.visible_ids = []
             self.states = {}
@@ -57,8 +63,8 @@ def run_gui(test_callback=None):
             self.text_widgets = []
             self.root.title('Tekniva YT Downloader')
             # Logical dimensions: Windows scales this automatically for high DPI screens.
-            self.root.geometry('960x650')
-            self.root.minsize(860, 610)
+            self.root.geometry('1000x640')
+            self.root.minsize(920, 600)
             icon = Path(getattr(sys, '_MEIPASS', APP_DIR)) / 'app.ico'
             if icon.exists():
                 root.iconbitmap(str(icon))
@@ -76,80 +82,78 @@ def run_gui(test_callback=None):
             self.quality_display = tk.StringVar()
             self.scope_display = tk.StringVar()
             self.speed_display = tk.StringVar()
+            self.engine = tk.StringVar(value=self.settings.get('engine', 'curl_cffi') if self.settings.get('engine') in ('curl_cffi', 'aria2') else 'curl_cffi')
+            self.clipboard_watch = tk.BooleanVar(value=self.settings.get('clipboard_watch', False))
+            self.last_clipboard = None
+            self.filter_mode = tk.StringVar(value='all')
             self.search = tk.StringVar()
             self.selection_text = tk.StringVar()
             self.status = tk.StringVar(value=self.t('ready'))
             self.detail = tk.StringVar(value=self.t('instructions'))
             self.count = tk.StringVar(value=self.t('empty'))
 
-            header = ttk.Frame(root, padding=(16, 10), style='Header.TFrame')
+            header = ttk.Frame(root, padding=(16, 8), style='Header.TFrame')
             header.pack(fill='x')
-            ttk.Label(header, text='Tekniva YT Downloader', font=('Segoe UI', 16, 'bold'), style='Header.TLabel').pack(side='left')
-            self.settings_btn = self.button(header, 'settings', self.open_settings)
+            ttk.Label(header, text='TEKNIVA', font=('Segoe UI', 17, 'bold'), style='Brand.TLabel').pack(side='left')
+            ttk.Label(header, text='YT Downloader', font=('Segoe UI', 12), style='Header.TLabel').pack(side='left', padx=(12, 0))
+            self.settings_btn = self.button(header, 'settings', self.open_settings, style='Header.TButton')
             self.settings_btn.pack(side='right')
-            source = ttk.Frame(root, padding=(16, 8))
+            source = ttk.Frame(root, padding=(16, 6))
             source.pack(fill='x')
-            self.label(source, 'link', style='Source.TLabel').pack(anchor='w', pady=(0, 4))
             row = ttk.Frame(source)
             row.pack(fill='x')
+            self.paste_btn = self.button(row, 'paste', self.paste_link)
+            self.paste_btn.pack(side='left', padx=(0, 8))
             self.url_entry = ttk.Entry(row, textvariable=self.url)
             self.url_entry.pack(side='left', fill='x', expand=True)
+            self.url_entry.bind('<Return>', lambda event: self.start('append'))
             self.list_btn = self.button(row, 'fetch', lambda: self.start('list'))
             self.list_btn.pack(side='left', padx=(8, 4))
-            self.add_btn = self.button(row, 'add', lambda: self.start('append'))
+            self.add_btn = self.button(row, 'add', lambda: self.start('append'), style='Accent.TButton')
             self.add_btn.pack(side='left')
-            self.label(source, 'hint', style='SourceMuted.TLabel').pack(anchor='w', pady=(4, 0))
 
-            body = ttk.Frame(root, padding=(16, 6))
-            body.pack(fill='both', expand=True)
-            body.columnconfigure(1, weight=1)
-            body.rowconfigure(0, weight=1)
-            sidebar = ttk.Frame(body, padding=12, style='Panel.TFrame', width=224)
-            sidebar.grid(row=0, column=0, sticky='nsew', padx=(0, 10))
-            sidebar.columnconfigure(0, weight=1)
-            self.label(sidebar, 'download_settings', font=('Segoe UI', 11, 'bold')).grid(row=0, column=0, sticky='w', pady=(0, 10))
-            choices = ttk.Frame(sidebar, style='Panel.TFrame')
-            choices.grid(row=1, column=0, sticky='ew')
-            choices.columnconfigure(0, weight=1)
-            choices.columnconfigure(1, weight=1)
-            self.label(choices, 'format').grid(row=0, column=0, sticky='w')
-            self.label(choices, 'quality').grid(row=0, column=1, sticky='w')
-            self.format_box = ttk.Combobox(choices, textvariable=self.fmt, values=['MP4', 'MP3'], state='readonly', width=6)
-            self.format_box.grid(row=1, column=0, sticky='ew', padx=(0, 6), pady=(4, 0))
-            self.quality_box = ttk.Combobox(choices, textvariable=self.quality_display, state='readonly', width=13)
-            self.quality_box.grid(row=1, column=1, sticky='ew', pady=(4, 0))
+            toolbar = ttk.Frame(root, padding=(16, 6), style='Panel.TFrame')
+            toolbar.pack(fill='x')
+            self.label(toolbar, 'format').pack(side='left', padx=(0, 6))
+            self.format_box = ttk.Combobox(toolbar, textvariable=self.fmt, values=['MP4', 'MP3'], state='readonly', width=6)
+            self.format_box.pack(side='left')
+            self.label(toolbar, 'quality').pack(side='left', padx=(14, 6))
+            self.quality_box = ttk.Combobox(toolbar, textvariable=self.quality_display, state='readonly', width=14)
+            self.quality_box.pack(side='left')
             self.format_box.bind('<<ComboboxSelected>>', self.format_changed)
             self.quality_box.bind('<<ComboboxSelected>>', lambda e: self.quality.set(self.quality_values[self.quality_box.current()]))
-            self.label(sidebar, 'scope').grid(row=2, column=0, sticky='w', pady=(10, 4))
-            self.scope_box = ttk.Combobox(sidebar, textvariable=self.scope_display, state='readonly', width=25)
-            self.scope_box.grid(row=3, column=0, sticky='ew')
-            self.scope_box.bind('<<ComboboxSelected>>', lambda e: self.scope.set(['Yalnızca Videolar sekmesi', 'Videolar + Shorts + yayın kayıtları'][self.scope_box.current()]))
-            self.label(sidebar, 'speed').grid(row=4, column=0, sticky='w', pady=(10, 4))
-            self.speed_box = ttk.Combobox(sidebar, textvariable=self.speed_display, state='readonly', width=25)
-            self.speed_box.grid(row=5, column=0, sticky='ew')
-            self.speed_box.bind('<<ComboboxSelected>>', lambda e: self.speed_mode.set(SPEED_MODES[self.speed_box.current()]))
-            self.start_btn = self.button(sidebar, 'download', lambda: self.start('download'), style='Primary.TButton')
-            self.start_btn.grid(row=6, column=0, sticky='ew', pady=(18, 0))
-            self.stop_btn = self.button(sidebar, 'stop', self.stop, state='disabled')
-            self.stop_btn.grid(row=7, column=0, sticky='ew', pady=(6, 0))
-            sidebar.rowconfigure(8, weight=1)
-            self.button(sidebar, 'open', self.open_folder).grid(row=9, column=0, sticky='ew', pady=(10, 0))
-            self.button(sidebar, 'log', self.open_log).grid(row=12, column=0, sticky='ew', pady=(10, 0))
+            self.start_btn = self.button(toolbar, 'download', lambda: self.start('download'), style='Primary.TButton')
+            self.start_btn.pack(side='left', padx=(16, 6))
+            self.stop_btn = self.button(toolbar, 'stop', self.stop, state='disabled')
+            self.stop_btn.pack(side='left')
+            self.button(toolbar, 'open', self.open_folder).pack(side='right')
+            self.button(toolbar, 'log', self.open_log).pack(side='right', padx=(4, 6))
 
-            library = ttk.Frame(body, padding=12, style='Panel.TFrame')
-            library.grid(row=0, column=1, sticky='nsew')
+            body = ttk.Frame(root, padding=(16, 8))
+            body.pack(fill='both', expand=True)
+            library = ttk.Frame(body, padding=10, style='Panel.TFrame')
+            library.pack(fill='both', expand=True)
             library.columnconfigure(0, weight=1)
-            library.rowconfigure(4, weight=1)
-            self.label(library, 'library', font=('Segoe UI', 12, 'bold')).grid(row=0, column=0, sticky='w')
-            ttk.Label(library, textvariable=self.selection_text, style='Muted.TLabel').grid(row=1, column=0, sticky='w', pady=(4, 8))
+            library.rowconfigure(3, weight=1)
+            caption = ttk.Frame(library, style='Panel.TFrame')
+            caption.grid(row=0, column=0, sticky='ew')
+            self.label(caption, 'queue', font=('Segoe UI', 12, 'bold')).pack(side='left')
+            ttk.Label(caption, textvariable=self.selection_text, style='Muted.TLabel').pack(side='right')
             searchrow = ttk.Frame(library, style='Panel.TFrame')
-            searchrow.grid(row=2, column=0, sticky='ew')
-            self.label(searchrow, 'search').pack(side='left', padx=(0, 6))
-            self.search_entry = ttk.Entry(searchrow, textvariable=self.search)
-            self.search_entry.pack(side='left', fill='x', expand=True)
-            self.button(searchrow, 'clear', lambda: self.search.set('')).pack(side='left', padx=(6, 0))
+            searchrow.grid(row=1, column=0, sticky='ew', pady=(10, 8))
+            self.filter_buttons = []
+            for value in ('all', 'waiting', 'completed', 'failed'):
+                widget = ttk.Radiobutton(searchrow, text=self.t('queue_' + value), value=value, variable=self.filter_mode,
+                                         style='Filter.TRadiobutton', command=self.apply_search)
+                self.text_widgets.append((widget, 'queue_' + value))
+                widget.pack(side='left', padx=(0, 4))
+                self.filter_buttons.append(widget)
+            self.button(searchrow, 'clear', lambda: self.search.set(''), style='Toolbar.TButton').pack(side='right')
+            self.search_entry = ttk.Entry(searchrow, textvariable=self.search, width=19)
+            self.search_entry.pack(side='right', padx=(6, 6), fill='x', expand=True)
+            self.label(searchrow, 'search').pack(side='right', padx=(16, 0))
             selection = ttk.Frame(library, style='Panel.TFrame')
-            selection.grid(row=3, column=0, sticky='ew', pady=(8, 6))
+            selection.grid(row=2, column=0, sticky='ew', pady=(0, 8))
             self.all_btn = self.button(selection, 'select_all_short', lambda: self.select_all(True), style='Toolbar.TButton')
             self.all_btn.pack(side='left')
             self.results_btn = self.button(selection, 'select_results_short', self.select_visible, style='Toolbar.TButton')
@@ -161,29 +165,34 @@ def run_gui(test_callback=None):
             self.remove_btn = self.button(selection, 'remove_short', self.remove_selected, style='Toolbar.TButton')
             self.remove_btn.pack(side='left', padx=4)
             tableframe = ttk.Frame(library, style='Panel.TFrame')
-            tableframe.grid(row=4, column=0, sticky='nsew')
+            tableframe.grid(row=3, column=0, sticky='nsew')
             tableframe.columnconfigure(0, weight=1)
             tableframe.rowconfigure(0, weight=1)
-            self.table = ttk.Treeview(tableframe, columns=('selected', 'title', 'duration', 'state'), show='headings', selectmode='extended')
-            for col, width in [('selected', 44), ('title', 230), ('duration', 62), ('state', 160)]:
-                self.table.column(col, width=width, minwidth=40 if col != 'title' else 100, stretch=col == 'title')
+            self.table = ttk.Treeview(tableframe, columns=('selected', 'title', 'source', 'duration', 'state'), show='tree headings', selectmode='extended')
+            self.table.column('#0', width=66, minwidth=66, stretch=False)
+            for col, width in [('selected', 42), ('title', 340), ('source', 130), ('duration', 60), ('state', 210)]:
+                self.table.column(col, width=width, minwidth=40 if col != 'title' else 180, stretch=col == 'title')
             self.table.grid(row=0, column=0, sticky='nsew')
-            scroll = ttk.Scrollbar(tableframe, command=self.table.yview)
-            scroll.grid(row=0, column=1, sticky='ns')
-            self.table.configure(yscrollcommand=scroll.set)
+            self.table_scroll = ttk.Scrollbar(tableframe, command=self.table.yview)
+            self.table_scroll.grid(row=0, column=1, sticky='ns')
+            self.table.configure(yscrollcommand=self.table_scrolled)
             self.table.bind('<Button-1>', self.table_click)
             self.table.bind('<Double-1>', self.table_double_click)
             self.table.bind('<space>', self.toggle_highlighted)
-            self.empty_label = ttk.Label(tableframe, text=self.t('no_results'), style='Muted.TLabel')
+            self.table.bind('<Button-3>', self.show_context_menu)
+            self.table.bind('<Return>', lambda event: self.open_item())
+            self.root.bind('<Control-v>', self.paste_shortcut)
+            self.root.bind('<Control-V>', self.paste_shortcut)
+            self.empty_label = ttk.Label(tableframe, text=self.t('empty_queue'), style='Muted.TLabel', justify='center')
             progress = ttk.Frame(library, style='Panel.TFrame')
-            progress.grid(row=5, column=0, sticky='ew', pady=(10, 0))
+            progress.grid(row=4, column=0, sticky='ew', pady=(6, 0))
             progress.columnconfigure(0, weight=1)
-            ttk.Label(progress, textvariable=self.status, style='Panel.TLabel', wraplength=540).grid(row=0, column=0, sticky='w')
-            ttk.Label(progress, textvariable=self.detail, style='Muted.TLabel', wraplength=540).grid(row=1, column=0, sticky='w', pady=(3, 5))
-            self.current_bar = ttk.Progressbar(progress, maximum=100)
+            ttk.Label(progress, textvariable=self.status, style='Panel.TLabel', wraplength=830).grid(row=0, column=0, sticky='w')
+            ttk.Label(progress, textvariable=self.detail, style='Muted.TLabel', wraplength=830).grid(row=1, column=0, sticky='w', pady=(3, 5))
+            self.current_bar = ttk.Progressbar(progress, maximum=100, style='Slim.Horizontal.TProgressbar')
             self.current_bar.grid(row=2, column=0, sticky='ew')
-            ttk.Label(progress, textvariable=self.count, style='Muted.TLabel', wraplength=540).grid(row=3, column=0, sticky='w', pady=(5, 4))
-            self.overall_bar = ttk.Progressbar(progress, maximum=100)
+            ttk.Label(progress, textvariable=self.count, style='Muted.TLabel', wraplength=830).grid(row=3, column=0, sticky='w', pady=(5, 4))
+            self.overall_bar = ttk.Progressbar(progress, maximum=100, style='Slim.Horizontal.TProgressbar')
             self.overall_bar.grid(row=4, column=0, sticky='ew')
             footer = ttk.Frame(root, padding=(16, 4))
             # Reserve the footer before the expanding body, including small windows.
@@ -208,10 +217,14 @@ def run_gui(test_callback=None):
             self.refresh_language()
             self.apply_theme()
             self.update_selection()
+            self.apply_search()
             if self.persistence_enabled:
                 self.restore_queue()
             root.protocol('WM_DELETE_WINDOW', self.close)
             root.after(200, self.poll)
+            if not test_callback:
+                for _ in range(2):
+                    threading.Thread(target=self.thumbnail_worker, daemon=True, name='Cover-preview').start()
             self.url_entry.focus_set()
             if test_callback:
                 root.withdraw()
@@ -243,17 +256,13 @@ def run_gui(test_callback=None):
         def refresh_language(self):
             for widget, key in self.text_widgets:
                 widget.configure(text=self.t(key))
-            for col in ('selected', 'title', 'duration', 'state'):
+            for col in ('selected', 'title', 'source', 'duration', 'state'):
                 arrow = (' ▼' if self.sort_reverse else ' ▲') if col == self.sort_column else ''
                 self.table.heading(col, text=self.t(col) + arrow, command=lambda c=col: self.sort_by(c))
             self.format_changed()
-            self.scope_box.configure(values=[self.t('videos'), self.t('all_tabs')])
-            self.scope_box.current(0 if self.scope.get() == 'Yalnızca Videolar sekmesi' else 1)
-            self.speed_box.configure(values=[self.t(k) for k in ('automatic', 'fast', 'balanced', 'compatible')])
-            self.speed_box.current(SPEED_MODES.index(self.speed_mode.get()) if self.speed_mode.get() in SPEED_MODES else 0)
             for video_id in self.entries:
                 self.render_state(video_id)
-            self.empty_label.configure(text=self.t('no_results'))
+            self.empty_label.configure(text=self.t('no_results' if self.entries else 'empty_queue'))
             self.status.set(self.t('ready') if not self.entries else self.t('loaded', n=len(self.entries)))
             self.detail.set(self.t('instructions'))
             self.count.set(self.t('empty') if not self.entries else self.t('queue'))
@@ -266,7 +275,7 @@ def run_gui(test_callback=None):
 
         def apply_theme(self):
             dark = self.theme == 'dark'
-            bg, panel, fg, muted, field, border = ('#101722', '#1A2535', '#EEF3FA', '#B4C3D6', '#111C2C', '#35465E') if dark else ('#EDF2F7', '#FFFFFF', '#17243B', '#52647A', '#FFFFFF', '#CBD5E1')
+            bg, panel, fg, muted, field, border = ('#101820', '#1A2632', '#F1F5F9', '#B9C8D7', '#111C27', '#344859') if dark else ('#EDF3F5', '#FFFFFF', '#182E3D', '#536B7A', '#F8FAFC', '#D6E2E8')
             hover = '#263A54' if dark else '#E5EEFA'
             self.root.configure(bg=bg)
             self.instagram_icon.configure(bg=bg)
@@ -280,13 +289,23 @@ def run_gui(test_callback=None):
             s.configure('Panel.TLabel', background=panel, foreground=fg)
             s.configure('Muted.TLabel', background=panel, foreground=muted)
             s.configure('Footer.TLabel', background=bg, foreground=muted)
-            s.configure('Header.TFrame', background='#0F172A')
-            s.configure('Header.TLabel', background='#0F172A', foreground='white')
+            s.configure('Header.TFrame', background='#102B3B')
+            s.configure('Header.TLabel', background='#102B3B', foreground='white')
+            s.configure('Brand.TLabel', background='#102B3B', foreground='#59DEC3')
+            s.configure('Header.TButton', background='#23495D', foreground='white')
+            s.map('Header.TButton', background=[('active', '#315E72')], foreground=[('active', 'white')])
+            s.configure('Accent.TButton', background='#D8F4ED' if not dark else '#214D4A', foreground=fg)
+            s.configure('TNotebook', background=bg, borderwidth=0, bordercolor=border, lightcolor=border, darkcolor=border)
+            s.configure('TNotebook.Tab', padding=(14, 8), background=border, foreground=fg, bordercolor=border, lightcolor=border, darkcolor=border)
+            s.map('TNotebook.Tab', background=[('selected', panel)], foreground=[('selected', fg)])
+            s.configure('Filter.TRadiobutton', padding=(9, 6), background=panel, foreground=fg)
+            s.layout('Filter.TRadiobutton', [('Radiobutton.padding', {'children': [('Radiobutton.label', {'sticky': 'nswe'})], 'sticky': 'nswe'})])
+            s.map('Filter.TRadiobutton', background=[('selected', '#237E73'), ('active', hover)], foreground=[('selected', 'white')])
             s.configure('TButton', padding=(7, 6), background=border, foreground=fg, borderwidth=0)
             s.configure('Toolbar.TButton', padding=(5, 6), font=('Nirmala UI' if self.language == 'hi' else 'Segoe UI', 9))
             s.map('TButton', background=[('disabled', panel), ('pressed', '#3B5270' if dark else '#C7DAF5'), ('active', hover)], foreground=[('disabled', '#8C9BAF' if dark else '#64748B'), ('active', fg)])
-            s.configure('Primary.TButton', background='#2563EB', foreground='white', padding=(8, 8))
-            s.map('Primary.TButton', background=[('active', '#1D4ED8'), ('disabled', border)], foreground=[('disabled', muted)])
+            s.configure('Primary.TButton', background='#147D70', foreground='white', padding=(12, 8))
+            s.map('Primary.TButton', background=[('active', '#11665D'), ('disabled', border)], foreground=[('disabled', muted)])
             s.configure('TEntry', padding=7, fieldbackground=field, foreground=fg, bordercolor=border, lightcolor=border, darkcolor=border, insertcolor=fg)
             s.map('TEntry', bordercolor=[('focus', '#60A5FA')], fieldbackground=[('disabled', panel)], foreground=[('disabled', muted)])
             s.configure('TCombobox', padding=5, fieldbackground=field, background=border, foreground=fg, arrowcolor=fg, bordercolor=border, lightcolor=border, darkcolor=border)
@@ -300,13 +319,19 @@ def run_gui(test_callback=None):
             self.root.option_add('*TCombobox*Listbox.foreground', fg)
             self.root.option_add('*TCombobox*Listbox.selectBackground', '#2563EB')
             self.root.option_add('*TCombobox*Listbox.selectForeground', '#FFFFFF')
-            s.configure('Treeview', rowheight=28, background=panel, fieldbackground=panel, foreground=fg, borderwidth=0)
-            s.configure('Treeview.Heading', padding=6, background=border, foreground=fg)
+            s.configure('Treeview', rowheight=36, background=panel, fieldbackground=panel, foreground=fg, borderwidth=0,
+                        bordercolor=panel, lightcolor=panel, darkcolor=panel)
+            s.layout('Treeview.Item', [('Treeitem.padding', {'sticky': 'nswe', 'children': [('Treeitem.image', {'side': 'left', 'sticky': ''}), ('Treeitem.text', {'side': 'left', 'sticky': ''})]})])
+            s.configure('Treeview.Heading', padding=6, background=border, foreground=fg, relief='flat',
+                        bordercolor=border, lightcolor=border, darkcolor=border)
             s.map('Treeview.Heading', background=[('active', hover)], foreground=[('active', fg)])
             s.map('Treeview', background=[('selected', '#1D4ED8')], foreground=[('selected', '#FFFFFF')])
-            s.configure('TProgressbar', background='#3B82F6', troughcolor=border, thickness=5)
-            self.table.tag_configure('even', background='#253449' if dark else '#F8FAFC')
+            s.configure('TProgressbar', background='#1CA995', troughcolor=border, thickness=5)
+            s.configure('Slim.Horizontal.TProgressbar', background='#1CA995', troughcolor=border, thickness=5,
+                        borderwidth=0, bordercolor=panel, lightcolor=panel, darkcolor=panel)
+            self.table.tag_configure('even', background='#203240' if dark else '#F3F8FA')
             self.table.tag_configure('error', foreground='#FDA4AF' if dark else '#BE123C')
+            self.table.tag_configure('completed', foreground='#75DEC2' if dark else '#08745C')
             self.dark_titlebar(self.root, dark)
             for window in self.root.winfo_children():
                 if isinstance(window, tk.Toplevel):
@@ -341,13 +366,18 @@ def run_gui(test_callback=None):
             frame.pack(fill='both', expand=True)
             ttk.Label(frame, text=self.t('settings'), font=('Segoe UI', 16, 'bold')).pack(anchor='w')
             ttk.Label(frame, text=self.t('settings_hint'), wraplength=430).pack(anchor='w', pady=(4, 16))
-            appearance = ttk.Frame(frame, padding=14, style='Panel.TFrame')
-            appearance.pack(fill='x', pady=(0, 12))
-            ttk.Label(appearance, text=self.t('preferences'), style='Panel.TLabel', font=('Segoe UI', 11, 'bold')).pack(anchor='w', pady=(0, 12))
+            tabs = ttk.Notebook(frame)
+            tabs.pack(fill='both', expand=True)
+            appearance = ttk.Frame(tabs, padding=16, style='Panel.TFrame')
+            network = ttk.Frame(tabs, padding=16, style='Panel.TFrame')
+            storage = ttk.Frame(tabs, padding=16, style='Panel.TFrame')
+            tabs.add(appearance, text=self.t('preferences'))
+            tabs.add(network, text=self.t('transfer_settings'))
+            tabs.add(storage, text=self.t('storage'))
             ttk.Label(appearance, text=self.t('language'), style='Panel.TLabel').pack(anchor='w')
             language = ttk.Combobox(appearance, values=list(LANGUAGES.values()), state='readonly', width=35)
             language.current(list(LANGUAGES).index(self.language))
-            language.pack(fill='x', pady=(5, 14))
+            language.pack(fill='x', pady=(5, 18))
             ttk.Label(appearance, text=self.t('theme'), style='Panel.TLabel').pack(anchor='w')
             original_theme = self.theme
             theme = tk.StringVar(value=self.theme)
@@ -360,8 +390,22 @@ def run_gui(test_callback=None):
             self.dark_mode_btn = ttk.Radiobutton(modes, text=self.t('dark'), value='dark', variable=theme, command=preview, style='Mode.TRadiobutton')
             self.light_mode_btn.pack(side='left', fill='x', expand=True, padx=(0, 6))
             self.dark_mode_btn.pack(side='left', fill='x', expand=True)
-            storage = ttk.Frame(frame, padding=14, style='Panel.TFrame')
-            storage.pack(fill='x')
+            ttk.Label(network, text=self.t('engine'), style='Panel.TLabel').pack(anchor='w')
+            self.engine_box = ttk.Combobox(network, values=[self.t('engine_default'), 'aria2'], state='readonly')
+            self.engine_box.current(0 if self.engine.get() == 'curl_cffi' else 1)
+            self.engine_box.pack(fill='x', pady=(5, 6))
+            ttk.Label(network, text=self.t('engine_hint'), style='Muted.TLabel', wraplength=430).pack(anchor='w', pady=(0, 12))
+            ttk.Label(network, text=self.t('speed'), style='Panel.TLabel').pack(anchor='w')
+            self.speed_box = ttk.Combobox(network, values=[self.t(k) for k in ('automatic', 'fast', 'balanced', 'compatible')], state='readonly')
+            self.speed_box.current(SPEED_MODES.index(self.speed_mode.get()) if self.speed_mode.get() in SPEED_MODES else 0)
+            self.speed_box.pack(fill='x', pady=(5, 12))
+            ttk.Label(network, text=self.t('scope'), style='Panel.TLabel').pack(anchor='w')
+            self.scope_box = ttk.Combobox(network, values=[self.t('videos'), self.t('all_tabs')], state='readonly')
+            self.scope_box.current(0 if self.scope.get() == 'Yalnızca Videolar sekmesi' else 1)
+            self.scope_box.pack(fill='x', pady=(5, 12))
+            watch = tk.BooleanVar(value=self.clipboard_watch.get())
+            ttk.Checkbutton(network, text=self.t('clipboard_watch'), variable=watch).pack(anchor='w')
+            ttk.Label(network, text=self.t('clipboard_hint'), style='Muted.TLabel', wraplength=430).pack(anchor='w', pady=(5, 0))
             ttk.Label(storage, text=self.t('storage'), font=('Segoe UI', 11, 'bold'), style='Panel.TLabel').pack(anchor='w', pady=(0, 12))
             ttk.Label(storage, text=self.t('folder'), style='Panel.TLabel').pack(anchor='w')
             folder = tk.StringVar(value=self.output.get())
@@ -395,6 +439,10 @@ def run_gui(test_callback=None):
                 self.channel_subfolders.set(subfolders.get())
                 self.artist_subfolders.set(artist_folders.get())
                 self.playlist_subfolders.set(playlist_folders.get())
+                self.engine.set(('curl_cffi', 'aria2')[self.engine_box.current()])
+                self.speed_mode.set(SPEED_MODES[self.speed_box.current()])
+                self.scope.set(['Yalnızca Videolar sekmesi', 'Videolar + Shorts + yayın kayıtları'][self.scope_box.current()])
+                self.clipboard_watch.set(watch.get())
                 self.actual_folder = None
                 self.save_settings()
                 self.refresh_language()
@@ -420,8 +468,141 @@ def run_gui(test_callback=None):
             dialog.grab_set()
             return dialog
 
+        def clipboard_link(self):
+            try:
+                raw = self.root.clipboard_get().strip()
+                _, url = normalize_source(raw)
+                return raw, url
+            except (tk.TclError, ValueError):
+                return None
+
+        def thumbnail_worker(self):
+            from PIL import Image, ImageOps
+            from curl_cffi import requests
+            while True:
+                job = self.thumbnail_jobs.get()
+                if job is None:
+                    return
+                video_id, url = job
+                try:
+                    # Preview requests only use thumbnail hosts supplied by YouTube.
+                    parsed = urlparse(url)
+                    host = parsed.hostname or ''
+                    if parsed.scheme != 'https' or not (host in ('i.ytimg.com', 'img.youtube.com') or host.endswith('.googleusercontent.com')):
+                        continue
+                    with requests.get(url, stream=True, timeout=5) as response:
+                        response.raise_for_status()
+                        data = bytearray()
+                        for chunk in response.iter_content():
+                            data.extend(chunk)
+                            if len(data) > 3 * 1024**2:
+                                raise ValueError('Preview too large')
+                    with Image.open(io.BytesIO(data)) as image:
+                        preview = ImageOps.fit(image.convert('RGB'), (54, 32))
+                    self.thumbnail_results.put((video_id, preview))
+                except Exception:
+                    # A missing cover never interrupts listing or downloading.
+                    pass
+
+        def table_scrolled(self, first, last):
+            self.table_scroll.set(first, last)
+            self.request_previews(int(float(first) * len(self.visible_ids)))
+
+        def request_previews(self, start=0):
+            if not self.persistence_enabled:
+                return
+            for video_id in self.visible_ids[start:start + 30]:
+                if video_id not in self.thumbnail_requested:
+                    entry = self.entries[video_id]
+                    url = entry.get('thumbnail') or f'https://i.ytimg.com/vi/{video_id}/mqdefault.jpg'
+                    self.thumbnail_requested.add(video_id)
+                    self.thumbnail_jobs.put((video_id, url))
+
+        def poll_previews(self):
+            from PIL import ImageTk
+            while not self.thumbnail_results.empty():
+                video_id, preview = self.thumbnail_results.get()
+                if video_id in self.entries and self.table.exists(video_id):
+                    image = ImageTk.PhotoImage(preview, master=self.root)
+                    self.thumbnail_images[video_id] = image
+                    self.table.item(video_id, image=image)
+
+        def paste_link(self, event=None):
+            if self.process or self.installing:
+                return 'break'
+            value = self.clipboard_link()
+            if not value:
+                self.status.set(self.t('clipboard_empty'))
+                return 'break'
+            self.last_clipboard = value[0]
+            self.url.set(value[1])
+            self.start('append')
+            return 'break'
+
+        def paste_shortcut(self, event):
+            # Entry widgets retain normal text-paste behavior.
+            if event.widget in (self.url_entry, self.search_entry) or isinstance(event.widget, (ttk.Entry, ttk.Combobox)):
+                return None
+            return self.paste_link()
+
+        def poll_clipboard(self):
+            if not self.clipboard_watch.get() or self.process or self.installing:
+                return
+            now = time.monotonic()
+            if now - getattr(self, 'clipboard_checked', 0) < 2:
+                return
+            self.clipboard_checked = now
+            value = self.clipboard_link()
+            if value and value[0] != self.last_clipboard:
+                self.last_clipboard = value[0]
+                self.url.set(value[1])
+                self.start('append')
+
+        def open_item(self, video_id=None):
+            selected = self.table.selection()
+            video_id = video_id or (selected[0] if selected else None)
+            if video_id not in self.entries:
+                return
+            filename = self.entries[video_id].get('filepath')
+            if filename and Path(filename).is_file():
+                os.startfile(filename)
+            else:
+                self.status.set(self.t('file_missing'))
+
+        def show_context_menu(self, event):
+            video_id = self.table.identify_row(event.y)
+            if not video_id:
+                return
+            self.table.selection_set(video_id)
+            if getattr(self, 'context_menu', None):
+                self.context_menu.destroy()
+            menu = self.context_menu = tk.Menu(self.root, tearoff=False,
+                           background='#1A2632' if self.theme == 'dark' else '#FFFFFF',
+                           foreground='#F1F5F9' if self.theme == 'dark' else '#182E3D',
+                           activebackground='#147D70', activeforeground='white')
+            menu.add_command(label=self.t('open_file'), command=lambda: self.open_item(video_id),
+                             state='normal' if self.entries[video_id].get('filepath') else 'disabled')
+            def open_source():
+                try:
+                    _, url = normalize_source(self.entries[video_id]['url'])
+                    webbrowser.open(url)
+                except (KeyError, ValueError):
+                    pass
+            menu.add_command(label=self.t('open_source'), command=open_source)
+            menu.add_separator()
+            def remove():
+                self.selected_ids = {video_id}
+                self.remove_selected()
+            menu.add_command(label=self.t('remove_short'), command=remove, state='disabled' if self.process else 'normal')
+            try:
+                menu.tk_popup(event.x_root, event.y_root)
+            finally:
+                menu.grab_release()
+
         def save_settings(self):
-            self.settings = {'url': self.url.get(), 'output': self.output.get(), 'channel_subfolders': self.channel_subfolders.get(), 'artist_subfolders': self.artist_subfolders.get(), 'playlist_subfolders': self.playlist_subfolders.get(), 'format': self.fmt.get(), 'quality': self.quality.get(), 'scope': self.scope.get(), 'speed': self.speed_mode.get(), 'language': self.language, 'theme': self.theme}
+            self.settings = {'url': self.url.get(), 'output': self.output.get(), 'channel_subfolders': self.channel_subfolders.get(), 'artist_subfolders': self.artist_subfolders.get(), 'playlist_subfolders': self.playlist_subfolders.get(), 'format': self.fmt.get(), 'quality': self.quality.get(), 'scope': self.scope.get(), 'speed': self.speed_mode.get(), 'engine': self.engine.get(), 'clipboard_watch': self.clipboard_watch.get(), 'language': self.language, 'theme': self.theme}
+            if not self.persistence_enabled:
+                return
             self.config_file.write_text(json.dumps(self.settings, ensure_ascii=False, indent=2), encoding='utf-8')
 
         def save_queue(self):
@@ -464,6 +645,8 @@ def run_gui(test_callback=None):
                 return
             self.table.delete(*(i for i in self.entries if self.table.exists(i)))
             self.entries.clear()
+            self.thumbnail_images.clear()
+            self.thumbnail_requested.clear()
             self.states.clear()
             self.selected_ids.clear()
             self.visible_ids.clear()
@@ -484,13 +667,19 @@ def run_gui(test_callback=None):
             for video_id, entry in self.entries.items():
                 if not self.table.exists(video_id):
                     continue
-                if all(word in search_text(entry['title']) for word in words):
+                state = self.states.get(video_id, ('waiting', 0))[0]
+                group = self.filter_mode.get()
+                matches = group == 'all' or (group == 'waiting' and state in ('waiting', 'stopped', 'preparing', 'downloading', 'processing')) or (group == 'completed' and state in ('completed', 'skipped')) or (group == 'failed' and state == 'failed')
+                haystack = search_text(entry['title'] + ' ' + (entry.get('artist') or entry.get('channel') or ''))
+                if matches and all(word in haystack for word in words):
                     self.table.move(video_id, '', 'end')
                     self.visible_ids.append(video_id)
                 else:
                     self.table.detach(video_id)
             self.reorder()
-            if self.entries and not self.visible_ids:
+            self.request_previews()
+            self.empty_label.configure(text=self.t('no_results' if self.entries else 'empty_queue'))
+            if not self.visible_ids:
                 self.empty_label.place(relx=.5, rely=.45, anchor='center')
             else:
                 self.empty_label.place_forget()
@@ -500,7 +689,7 @@ def run_gui(test_callback=None):
             self.sort_reverse = not self.sort_reverse if column == self.sort_column else False
             self.sort_column = column
             self.reorder()
-            for col in ('selected', 'title', 'duration', 'state'):
+            for col in ('selected', 'title', 'source', 'duration', 'state'):
                 arrow = (' ▼' if self.sort_reverse else ' ▲') if col == self.sort_column else ''
                 self.table.heading(col, text=self.t(col) + arrow)
 
@@ -516,7 +705,7 @@ def run_gui(test_callback=None):
                 if col == 'state':
                     state, percent = self.states.get(i, ('waiting', 0))
                     return (['waiting', 'preparing', 'downloading', 'processing', 'completed', 'skipped', 'stopped', 'failed'].index(state), percent)
-                return search_text(self.entries[i]['title'])
+                return search_text((self.entries[i].get('artist') or self.entries[i].get('channel') or '') if col == 'source' else self.entries[i]['title'])
             self.visible_ids.sort(key=key, reverse=self.sort_reverse)
             for i in self.visible_ids:
                 self.table.move(i, '', 'end')
@@ -557,7 +746,11 @@ def run_gui(test_callback=None):
         def table_double_click(self, event):
             if self.table.identify_region(event.x, event.y) == 'cell':
                 if self.table.identify_column(event.x) != '#1':
-                    self.toggle(self.table.identify_row(event.y))
+                    video_id = self.table.identify_row(event.y)
+                    if self.states.get(video_id, ('waiting', 0))[0] in ('completed', 'skipped'):
+                        self.open_item(video_id)
+                    else:
+                        self.toggle(video_id)
                 return 'break'
 
         def toggle_highlighted(self, event=None):
@@ -571,6 +764,8 @@ def run_gui(test_callback=None):
             for i in list(self.selected_ids):
                 self.table.delete(i)
                 self.entries.pop(i, None)
+                self.thumbnail_images.pop(i, None)
+                self.thumbnail_requested.discard(i)
                 self.states.pop(i, None)
             self.selected_ids.clear()
             self.apply_search()
@@ -589,9 +784,9 @@ def run_gui(test_callback=None):
                 self.output.set(path)
 
         def busy(self, active):
-            for widget in (self.list_btn, self.add_btn, self.url_entry, self.settings_btn):
+            for widget in (self.list_btn, self.add_btn, self.paste_btn, self.url_entry, self.settings_btn):
                 widget.configure(state='disabled' if active else 'normal')
-            for widget in (self.format_box, self.quality_box, self.scope_box, self.speed_box):
+            for widget in (self.format_box, self.quality_box):
                 widget.configure(state='disabled' if active else 'readonly')
             self.stop_btn.configure(state='normal' if active else 'disabled')
             self.update_selection()
@@ -725,7 +920,9 @@ def run_gui(test_callback=None):
             if video_id in self.entries:
                 self.states[video_id] = (state, percent)
                 self.render_state(video_id)
-                if self.sort_column == 'state':
+                if self.filter_mode.get() != 'all':
+                    self.apply_search()
+                elif self.sort_column == 'state':
                     self.reorder()
 
         def render_state(self, video_id):
@@ -736,17 +933,20 @@ def run_gui(test_callback=None):
                     self.table.item(video_id, tags=('error',))
                 else:
                     index = list(self.entries).index(video_id)
-                    self.table.item(video_id, tags=('even',) if index % 2 == 0 else ())
+                    self.table.item(video_id, tags=(('even',) if index % 2 == 0 else ()) + (('completed',) if state in ('completed', 'skipped') else ()))
 
         def handle(self, event):
             kind = event['kind']
             if kind == 'list':
                 self.actual_folder = event['folder']
                 if self.action == 'list':
+                    self.filter_mode.set('all')
                     self.search.set('')
                     if not self.append_mode:
                         self.table.delete(*(i for i in self.entries if self.table.exists(i)))
                         self.entries.clear()
+                        self.thumbnail_images.clear()
+                        self.thumbnail_requested.clear()
                         self.states.clear()
                         self.selected_ids.clear()
                         self.visible_ids.clear()
@@ -761,7 +961,7 @@ def run_gui(test_callback=None):
                         self.entries[i] = item
                         duration = int(item.get('duration') or 0)
                         duration_text = f'{duration//3600}:{duration//60%60:02}:{duration%60:02}' if duration >= 3600 else f'{duration//60}:{duration%60:02}' if duration else '—'
-                        self.table.insert('', 'end', iid=i, values=('☐', item['title'], duration_text, ''))
+                        self.table.insert('', 'end', iid=i, values=('☐', item['title'], item.get('artist') or item.get('channel') or '', duration_text, ''))
                         self.set_state(i, 'waiting')
                     if self.action == 'list' and (self.append_mode or normalize_source(self.url.get())[0] == 'video'):
                         self.selected_ids.add(i)
@@ -811,6 +1011,8 @@ def run_gui(test_callback=None):
                 self.detail.set(self.t('progress', percent=f'{percent:.0f}', speed=f"{(event.get('speed') or 0)/1024**2:.1f}", eta=remaining))
             elif kind == 'item':
                 state = {'Tamamlandı': 'completed', 'Zaten indirildi': 'skipped', 'Hata': 'failed'}[event['state']]
+                if event.get('filepath') and event['id'] in self.entries:
+                    self.entries[event['id']]['filepath'] = event['filepath']
                 self.set_state(event['id'], state, 100 if state in ('completed', 'skipped') else 0)
                 if event.get('error'):
                     self.last_error_hint = self.t('error_' + event.get('error_code', 'network'))
@@ -828,6 +1030,8 @@ def run_gui(test_callback=None):
 
         def poll(self):
             self.poll_install()
+            self.poll_previews()
+            self.poll_clipboard()
             if self.events_file and self.events_file.exists():
                 with self.events_file.open('r', encoding='utf-8') as handle:
                     handle.seek(self.event_offset)
@@ -893,6 +1097,8 @@ def run_gui(test_callback=None):
             except OSError:
                 pass
             self.root.destroy()
+            for _ in range(2):
+                self.thumbnail_jobs.put(None)
 
     root = tk.Tk()
     App(root)

@@ -14,11 +14,16 @@ Tekniva YT Downloader source: Copyright © 2026 Tekniva, GPL-3.0-or-later. Bundl
 | Mutagen | 1.48.1 | GPL-2.0-or-later | https://github.com/quodlibet/mutagen |
 | Pillow | 12.1.1 | MIT-CMU and included third-party notices | https://github.com/python-pillow/Pillow |
 | Certifi certificate bundle | 2026.7.22 | MPL-2.0 | https://github.com/certifi/python-certifi |
+| curl_cffi | 0.16.0 | MIT; bundled libcurl/BoringSSL and codec library notices | https://github.com/lexiforest/curl_cffi/tree/v0.16.0 ; https://github.com/lexiforest/curl-impersonate |
+| CFFI | 2.1.1 | MIT | https://cffi.readthedocs.io/ |
+| pycparser | 3.0 | BSD-3-Clause | https://github.com/eliben/pycparser |
 | PyInstaller bootloader | 6.22.3 | GPL-2.0-or-later with bootloader exception | https://github.com/pyinstaller/pyinstaller |
 
 Runtime license texts are supplied in `licenses/`. The full GPLv3 text is also in the top-level `LICENSE`. Python package notices can be reproduced from the pinned distributions using `program/collect_licenses.py`. Runtime dependencies are pinned in `requirements.txt`; development dependencies are specified in `requirements-dev.txt`. They retain their respective licenses.
 
 ## Binary provenance and source access
+
+- curl_cffi 0.16.0 uses the unmodified upstream Windows x64 libcurl-impersonate 2.0.0 build. Its [build definition](https://github.com/lexiforest/curl_cffi/blob/v0.16.0/scripts/build.py) and [library sources/build references](https://github.com/lexiforest/curl-impersonate/blob/v2.0.0/CMakeLists.txt) identify libcurl 8.21.0, BoringSSL, zlib, brotli, zstd, nghttp2, ngtcp2 and nghttp3. Original dependency notices and exact source links are included in `licenses/curl-impersonate/`. No browser impersonation is forced by the default transport.
 
 - aria2 Windows binary is taken directly from [this official ZIP](https://github.com/aria2/aria2/releases/download/release-1.37.0/aria2-1.37.0-win-64bit-build1.zip). Its SHA-256 is `67d015301eef0b612191212d564c5bb0a14b5b9c4796b76454276a4d28d9b288`. The corresponding [aria2 1.37.0 source archive](https://github.com/aria2/aria2/releases/download/release-1.37.0/aria2-1.37.0.tar.xz) and Windows build instructions are available upstream. `licenses/aria2-*` are copied unchanged from the binary ZIP.
 - FFmpeg comes unchanged from the imageio-ffmpeg 0.6.0 Windows wheel: `ffmpeg-win-x86_64-v7.1.exe`, identifying itself as `7.1-essentials_build-www.gyan.dev`. The original build provider documents the GPLv3 license and enabled libraries at [gyan.dev](https://www.gyan.dev/ffmpeg/builds/). FFmpeg's matching core source is [n7.1](https://github.com/FFmpeg/FFmpeg/archive/refs/tags/n7.1.tar.gz). Build configuration is recorded in `licenses/FFmpeg-build.txt`; upstream codec/library projects and their licenses remain applicable. FFmpeg is invoked as a separate executable.

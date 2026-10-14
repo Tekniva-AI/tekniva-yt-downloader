@@ -29,6 +29,7 @@ jobs:
       - run: python program/test_program.py
       - run: python program/test_dependencies.py
       - run: python -m unittest discover -s program -p test_performance.py -v
+      - run: python -m unittest discover -s program -p test_transfer.py -v
       - run: python program/collect_licenses.py
       - run: python program/build_release.py --rebuild
       - run: python program/package_release.py
@@ -41,7 +42,7 @@ jobs:
           $app = Start-Process -FilePath '.\program\Tekniva YT Downloader.exe' -ArgumentList '--check', $result -WindowStyle Hidden -Wait -PassThru
           if ($app.ExitCode -ne 0) { throw 'Packaged dependency check failed' }
           $deps = Get-Content -LiteralPath $result | ConvertFrom-Json
-          if (-not ($deps.ffmpeg -and $deps.aria2 -and $deps.node)) { throw 'Missing packaged dependency' }
+          if (-not ($deps.ffmpeg -and $deps.aria2 -and $deps.node -and $deps.curl_cffi)) { throw 'Missing packaged dependency' }
       - uses: actions/upload-artifact@v4
         with:
           name: windows-release

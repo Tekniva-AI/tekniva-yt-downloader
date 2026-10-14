@@ -41,6 +41,7 @@ command = [sys.executable, '-m', 'PyInstaller', '--noconfirm', '--onefile', '--w
            '--add-data', str(root.parent / 'THIRD_PARTY_NOTICES.md') + ';licenses',
            '--add-binary', str(root / 'tools' / 'aria2c.exe') + ';tools', '--collect-all', 'yt_dlp',
            '--collect-all', 'yt_dlp_ejs', '--collect-all', 'imageio_ffmpeg', '--collect-data', 'certifi',
+           '--collect-all', 'curl_cffi', '--hidden-import', '_cffi_backend', '--copy-metadata', 'curl-cffi',
            '--copy-metadata', 'yt-dlp', '--copy-metadata', 'yt-dlp-ejs', '--copy-metadata', 'mutagen', str(root / 'kanal_indirici.py')]
 with (root / ('paketleme-' + number + '.log')).open('w', encoding='utf-8') as log:
     subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True)

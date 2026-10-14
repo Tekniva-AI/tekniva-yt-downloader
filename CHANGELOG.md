@@ -2,6 +2,20 @@
 
 Yayımlanan kullanıcı güncellemelerinde sürüm numarası artırılır. Beta sürümleri GitHub'da prerelease olarak işaretlenir.
 
+## [0.1.8-beta](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.8-beta) — 2026-10-14
+
+### Eklendi ve yenilendi
+
+- curl_cffi 0.16.0 varsayılan HTTP/HTTPS bağlantı katmanı oldu; EXE/ZIP paketlerine dahil edildi. Tarayıcı taklidi zorlanmaz.
+- Ayarlar → Bağlantı ve kuyruk sekmesinde aria2 motor tercihi, ayrı aktarım modu ve kanal kapsamı.
+- MediaHuman’ın kullanım yaklaşımından esinlenen tam genişlikte kuyruk, Tekniva’ya özgü turkuaz renkler, kompakt araç çubuğu ve açık/koyu görünüm.
+- Küçük kapak önizlemeleri, kanal/sanatçı sütunu ve başlıkla birlikte kaynak araması.
+- Bekleyen, tamamlanan ve hata filtreleri; yeni eklenen içerikler için filtre sıfırlama.
+- Panodan ekleme, Enter/Ctrl+V/Space kısayolları, varsayılan kapalı otomatik pano takibi.
+- Tamamlanan dosyayı açma, sağ tık kaynak/dosya menüsü ve kuyruk öğesini kaldırma.
+- Sekmeli ayarlar, yedi dilde yeni metinler, sertifika hatasında sistem güven deposuyla doğrulanan geri dönüş.
+- Gerçek curl HTTP/Range aktarımı ve altı yeni davranış testi; EXE/ZIP testinde curl_cffi yüklenme ve gerçek medya aktarımı kontrolü.
+
 ## [0.1.7-beta](https://github.com/Tekniva-AI/tekniva-yt-downloader/releases/tag/v0.1.7-beta) — 2026-10-14
 
 ### Düzeltildi ve hızlandırıldı

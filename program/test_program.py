@@ -58,21 +58,21 @@ class ProgramTests(unittest.TestCase):
                 if self.attempt < 3:
                     raise yt_dlp.utils.DownloadError('HTTP Error 403: Forbidden')
                 return info
-        with patch.object(yt_dlp, 'YoutubeDL', Downloader):
+        with patch('kanal_indirici.create_downloader', Downloader):
             result = download_with_recovery('https://youtube.com/watch?v=sample', {'logger': SilentLog()}, lambda *args, **kwargs: None, sleep=delays.append)
         self.assertEqual(result['height'], 2160)
         self.assertEqual(delays, [5, 10])
         self.assertIn('proto:m3u8_native', attempts[-1]['format_sort'])
 
     def test_permanent_errors_are_not_retried(self):
-        with patch.object(yt_dlp, 'YoutubeDL') as mocked:
+        with patch('kanal_indirici.create_downloader') as mocked:
             mocked.return_value.__enter__.return_value.extract_info.side_effect = yt_dlp.utils.DownloadError('This video is private')
             with self.assertRaises(yt_dlp.utils.DownloadError):
                 download_with_recovery('https://youtube.com/watch?v=sample', {'logger': SilentLog()}, lambda *args, **kwargs: None, sleep=lambda n: self.fail('Unexpected retry'))
             self.assertEqual(mocked.call_count, 1)
 
     def test_recovery_does_not_reduce_resolution(self):
-        with patch.object(yt_dlp, 'YoutubeDL') as mocked:
+        with patch('kanal_indirici.create_downloader') as mocked:
             downloader = mocked.return_value.__enter__.return_value
             downloader.extract_info.side_effect = [{'height': 2160, 'fps': 60}, {'height': 1080, 'fps': 60}]
             downloader.process_ie_result.side_effect = yt_dlp.utils.DownloadError('HTTP Error 403: Forbidden')
@@ -92,7 +92,7 @@ class ProgramTests(unittest.TestCase):
         self.assertEqual(normalize_source('https://music.youtube.com/channel/UCexample')[0], 'channel')
         with self.assertRaises(ValueError):
             normalize_source('https://music.youtube.com/playlist?list=')
-        with patch.object(yt_dlp, 'YoutubeDL') as mocked:
+        with patch('kanal_indirici.create_downloader') as mocked:
             mocked.return_value.__enter__.return_value.extract_info.return_value = {
                 'title': 'Album', 'entries': [{'id': 'SyQi3gH-Ol4', 'title': 'Track'}]}
             entries, title, _ = get_entries({'url': 'https://music.youtube.com/playlist?list=OLAK5uy_test',
@@ -144,7 +144,7 @@ class ProgramTests(unittest.TestCase):
                    'events': str(root / 'events.jsonl'), 'log': str(root / 'log.txt')}
             job_file = root / 'job.json'
             job_file.write_text(json.dumps(job), encoding='utf-8')
-            with patch.object(yt_dlp, 'YoutubeDL', FakeDownloader):
+            with patch('kanal_indirici.create_downloader', FakeDownloader):
                 self.assertEqual(run_worker(job_file), 0)
             self.assertEqual(calls, [('https://www.youtube.com/watch?v=SyQi3gH-Ol4', True),
                                      ('https://www.youtube.com/watch?v=Zyvzfn-bYL8', True)])
@@ -375,14 +375,14 @@ class ProgramTests(unittest.TestCase):
                    'events': str(root / 'events.jsonl'), 'log': str(root / 'log.txt')}
             path = root / 'job.json'
             path.write_text(json.dumps(job), encoding='utf-8')
-            with patch.object(yt_dlp, 'YoutubeDL', Downloader):
+            with patch('kanal_indirici.create_downloader', Downloader):
                 self.assertEqual(run_worker(path), 0)
             self.assertEqual({p.name for p in (root / 'flat').iterdir()}, {'First.mp4', 'Second.mp4'})
             paths = metadata_paths(root / 'flat', job)
             self.assertTrue(paths['names'].exists() and paths['report'].exists())
             job.update(output=str(root / 'channels'), channel_subfolders=True)
             path.write_text(json.dumps(job), encoding='utf-8')
-            with patch.object(yt_dlp, 'YoutubeDL', Downloader):
+            with patch('kanal_indirici.create_downloader', Downloader):
                 self.assertEqual(run_worker(path), 0)
             self.assertEqual({p.name for p in (root / 'channels').iterdir()}, {'Channel A', 'Channel B'})
             self.assertTrue((root / 'channels' / 'Channel A' / 'First.mp4').exists())
@@ -429,7 +429,7 @@ class ProgramTests(unittest.TestCase):
                 job_file.write_text(json.dumps(job), encoding='utf-8')
                 real_options = make_options
                 def options(*args, **kwargs): return {**real_options(*args, **kwargs), 'test_ext': fmt.lower()}
-                with patch.object(yt_dlp, 'YoutubeDL', Downloader), patch('kanal_indirici.make_options', side_effect=options):
+                with patch('kanal_indirici.create_downloader', Downloader), patch('kanal_indirici.make_options', side_effect=options):
                     self.assertEqual(run_worker(job_file), 0)
                     count = len(downloads)
                     self.assertEqual(run_worker(job_file), 0)
