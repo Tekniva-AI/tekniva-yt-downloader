@@ -35,7 +35,7 @@ class DependencyTests(unittest.TestCase):
             local = dep.local_node(root)
             local.parent.mkdir(parents=True)
             local.write_bytes(b'current')
-            with patch.object(dep.shutil, 'which', return_value=str(system)), patch.object(dep, 'usable_node', side_effect=lambda p: Path(p) == local):
+            with patch.object(dep.shutil, 'which', return_value=str(system)), patch.object(dep, 'usable_node', side_effect=lambda p: Path(p).resolve() == local.resolve()):
                 self.assertEqual(dep.node_path(root), str(local.resolve()))
                 self.assertEqual(dep.node_runtime_options(root), {'node': {'path': str(local.resolve())}})
                 local.unlink()
